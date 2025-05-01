@@ -1,0 +1,26 @@
+{
+    "name": "shareddice",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "FoundryVTT module that allows GMs to give players a number of dice they can expend themselves or share with other players.",
+    "main": "scripts/module.mjs",
+    "scripts": {
+        "lint": "eslint .",
+        "symlink:module": "node ./npm-scripts/create-symlinks.js --lt module",
+        "symlink:systems": "node ./npm-scripts/create-symlinks.js --lt systems",
+        "symlink:foundry": "node ./npm-scripts/create-symlinks.js --lt foundry",
+        "symlink:all": "node ./npm-scripts/create-symlinks.js --lt all",
+        "clean:module": "node ./npm-scripts/create-symlinks.js --lt module --clean",
+        "clean:systems": "node ./npm-scripts/create-symlinks.js --lt systems --clean",
+        "clean:foundry": "node ./npm-scripts/create-symlinks.js --lt foundry --clean",
+        "clean:all": "node ./npm-scripts/create-symlinks.js all --lt --clean"
+    },
+    "author": "Belodri",
+    "license": "MIT",
+    "devDependencies": {
+        "eslint": "^9.15.0",
+        "eslint-plugin-jsdoc": "^50.5.0",
+        "fs-extra": "^11.3.0",
+        "yargs": "^17.7.2"
+    }
+}

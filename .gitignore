@@ -1,0 +1,7 @@
+foundry/**
+systems/**
+packs/**
+/.vscode/**
+node_modules/**
+todo.md
+foundry-paths-config.json
