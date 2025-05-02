@@ -5,3 +5,4 @@ packs/**
 node_modules/**
 todo.md
 foundry-paths-config.json
+foundry-config.yaml

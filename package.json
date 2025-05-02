@@ -6,6 +6,7 @@
     "main": "scripts/module.mjs",
     "scripts": {
         "lint": "eslint .",
+        "createFoundrySymlinks": "node ./tools/create-foundry-symlinks.mjs",
         "symlink:module": "node ./npm-scripts/create-symlinks.js --lt module",
         "symlink:systems": "node ./npm-scripts/create-symlinks.js --lt systems",
         "symlink:foundry": "node ./npm-scripts/create-symlinks.js --lt foundry",

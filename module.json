@@ -30,10 +30,14 @@
     "flags": {
         "hotReload": {
             "extensions": [
-                "css"
+                "css",
+                "hbs",
+                "json"
             ],
             "paths": [
-                "styles"
+                "styles",
+                "templates",
+                "lang"
             ]
         }
     }
