@@ -1,0 +1,58 @@
+<section class="standard-form settings-main scrollable">
+    <div class="settings-header">
+        {{#if die.id}}<img src="{{die.img}}" alt="{{die.name}}" height="64px" width="64px">{{/if}}
+
+        <fieldset>
+            <legend>{{ localize "SHAREDDICE.Settings.ManageDiceTypes" }}</legend>
+
+            {{!-- Select Type --}}
+            <div class="dice-type-management">
+                <select class="dice-type-select" data-current-die={{selectedDie.id}}>
+                    {{ selectOptions selectDiceOptions selected=die.id valueAttr="id" labelAttr="name" }}
+                </select>
+                <button 
+                    type="button"
+                    data-action="createDiceType"
+                    data-tooltip="{{ localize "SHAREDDICE.Settings.CreateButtonTooltip" }}"
+                ><i class="fa-solid fa-circle-plus"></i></button>
+                <button 
+                    type="button"
+                    data-action="deleteDiceType"
+                    data-tooltip="{{ localize "SHAREDDICE.Settings.DeleteButtonTooltip" }}"
+                ><i class="fa-solid fa-circle-minus"></i></button>
+            </div>
+        </fieldset>
+    </div>
+
+    {{log this}}
+
+    {{#if die.id }}
+    <fieldset class="dice-config">
+        <legend>{{ localize "SHAREDDICE.Settings.DiceConfigTitle"}}</legend>
+
+        {{ formGroup fields.enabled value=die.enabled name="enabled" localize=true }}
+        {{ formGroup fields.name value=die.name name="name" localize=true }}
+        {{ formGroup fields.img value=die.img name="img" localize=true }}
+        {{ formGroup fields.maxPerUser value=die.maxPerUser name="maxPerUser" localize=true }}
+
+    </fieldset>
+    <fieldset class="dice-config">
+        <legend>{{ localize "SHAREDDICE.Settings.PlaceholderInfo.Title" }}</legend>
+        <div class="explanation">
+            <p class="hint">{{ localize "SHAREDDICE.Settings.PlaceholderInfo.Explanation"}}</p>
+            <p></p>
+            <ul class="hint">
+                <li>[$sourceUser] - {{ localize "SHAREDDICE.Settings.PlaceholderInfo.sourceUser"}}</li>
+                <li>[$targetUser] - {{ localize "SHAREDDICE.Settings.PlaceholderInfo.targetUser"}}</li>
+                <li>[$sharedDieName] - {{ localize "SHAREDDICE.Settings.PlaceholderInfo.sharedDieName"}}</li>
+            </ul>
+        </div>
+        
+        {{ formGroup fields.msgOnAdd value=die.msgOnAdd name="msgOnAdd" localize=true }}
+        {{ formGroup fields.msgOnRemove value=die.msgOnRemove name="msgOnRemove" localize=true }}
+        {{ formGroup fields.msgOnUse value=die.msgOnUse name="msgOnUse" localize=true }}
+        {{ formGroup fields.msgOnGift value=die.msgOnGift name="msgOnGift" localize=true }}
+
+    </fieldset>
+    {{/if}}
+</section>
