@@ -1,6 +1,6 @@
-import DiceType from "./classes/DiceType.mjs";
 import DiceTypesSettingMenu from "./applications/DiceTypesSettingMenu.mjs";
 import { MODULE_ID } from "./CONSTS.mjs";
+import UIHandler from "./classes/UIHandler.mjs";
 
 const SETTINGS = {
     diceTypes: {
@@ -8,7 +8,7 @@ const SETTINGS = {
         config: false,
         type: Object,
         default: {},
-        onChange: DiceType._onSettingChange
+        onChange: () => UIHandler.rerender(),   // Triggers on all since it's a world setting.    
     },
     minRoleToEdit: {
         name: "SHAREDDICE.Settings.MinRoleToEdit.Name",
@@ -64,4 +64,3 @@ export async function setSetting(key, data) {
 export function getSetting(key) {
     return game.settings.get(MODULE_ID, key);
 }
-

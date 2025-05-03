@@ -47,10 +47,9 @@ export default class DiceType extends foundry.abstract.DataModel {
      * If no limit, returns `Infinity`
      * @returns {number} 
      */
-    get maxAllowed() {
+    get limit() {
         return this.maxPerUser === 0 ? Infinity : this.maxPerUser;
     }
-
 
     //#region Data Model
 
@@ -113,7 +112,7 @@ export default class DiceType extends foundry.abstract.DataModel {
                 required: true,
                 label: "SHAREDDICE.Fields.msgOnGift.Label",
                 hint: "SHAREDDICE.Fields.msgOnGift.Hint"
-            }),
+            })
         }
     }
 
@@ -135,18 +134,23 @@ export default class DiceType extends foundry.abstract.DataModel {
 
     /**
      * Retrieve a specific DiceType from the settings by its unique ID.
-     * @param {string} diceId   The unique identifier for the desired dice type.
-     * @returns {DiceType}      A DiceType instance if found, otherwise undefined.
+     * @param {string} diceId               The unique identifier for the desired dice type.
+     * @param {boolean} [data=false]        If true, the data object of the DiceType is returned instead of the instance. 
+     * @returns {DiceType|DiceTypeData}     The DiceType instance or it's data object.
+     * @throws {Error} If the dice diceId was not found in the settings.
      */
-    static getFromId(diceId) {
+    static getFromId(diceId, data=false) {
         const diceTypes = getSetting("diceTypes");
         const typeData = diceTypes[diceId];
-        return typeData ? new DiceType(typeData) : undefined;
+        if(!typeData) throw new Error(`Invalid diceId: "${diceId}"`);
+
+        return data ? typeData : new DiceType(typeData);
     }
 
     /**
      * Get the data object for all configured dice types from settings.
-     * @returns {{[id: string]: DiceType}}
+     * Always returns at least an empty object.
+     * @returns {{[id: string]: DiceTypeData}}
      */
     static getDataAll() {
         return getSetting("diceTypes");
@@ -164,8 +168,18 @@ export default class DiceType extends foundry.abstract.DataModel {
      * @returns {any}
      */
     static getProp(diceId, key) {
-        const path = `diceTypes.${diceId}.${key}`;
-        return getSetting(path);
+        const data = DiceType.getDataAll();
+        return foundry.utils.getProperty(data, `${diceId}.${key}`);
+    }
+
+    /**
+     * Checks if a diceId exists in the settings.
+     * @param {string} diceId 
+     * @returns {boolean}
+     */
+    static exists(diceId) {
+        const data = DiceType.getDataAll();
+        return !!data[diceId];
     }
 
     /**
@@ -196,38 +210,6 @@ export default class DiceType extends foundry.abstract.DataModel {
     }
 
     //#endregion
-
-    static _onSettingChange() {
-        //TODO
-        //called when the value of the setting containing all dice types changes.
-        // triggers on all clients since it's a world setting!
-        // use it to update the data of all existing ui elements, etc.
-
-        // DON'T USE THE VALUE ARGUMENT
-        // from the community wiki:
-        // Because this value argument is not necessarily the same value that would be returned from settings.get, 
-        // it is safer to get the new value in this callback if you intend to operate on it.
-    }
-
-
-    async showDialogTESTING() {
-        const { DialogV2 } = foundry.applications.api;
-
-        const content = Object.entries(this.schema.fields).reduce((acc, [k, v]) => {
-            acc += v.toFormGroup({}, {name: k}).outerHTML;
-            return acc;
-        }, "");
-
-        const ret = await DialogV2.prompt({
-            content,
-            ok: {
-                callback: (_event, button) => new FormDataExtended(button.form).object
-            }
-        });
-
-        return ret;
-    }
-
 }
 
 

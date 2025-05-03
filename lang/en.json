@@ -22,7 +22,7 @@
             "DiceConfigHeader": "Shared Die: {dieName}",
             "DiceConfigTitle": "Die Configuration",
             "PlaceholderInfo": {
-                "Title": "Placeholders",
+                "Title": "Chat Messages",
                 "sourceUser": "The initiating user's name.",
                 "targetUser": "The targeted user's name.",
                 "sharedDieName": "The name of this die.",
@@ -69,7 +69,9 @@
             }
         },
         "Notifications": {
-            
+            "onNegative": "Shared Dice can not have negative values.",
+            "onOverLimit": "The limit for how many {diceTypeName} a user can have is {diceTypeLimit}.",
+            "roleCannotHave": "Users with Add/Remove permission cannot have dice themselves."
         }
     }
 }
