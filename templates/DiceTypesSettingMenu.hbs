@@ -34,6 +34,7 @@
         {{ formGroup fields.name value=die.name name="name" localize=true }}
         {{ formGroup fields.img value=die.img name="img" localize=true }}
         {{ formGroup fields.maxPerUser value=die.maxPerUser name="maxPerUser" localize=true }}
+        {{ formGroup fields.hideIfZero value=die.hideIfZero name="hideIfZero" localize=true }}
 
     </fieldset>
     <fieldset class="dice-config">
@@ -44,14 +45,14 @@
             <ul class="hint">
                 <li>[$sourceUser] - {{ localize "SHAREDDICE.Settings.PlaceholderInfo.sourceUser"}}</li>
                 <li>[$targetUser] - {{ localize "SHAREDDICE.Settings.PlaceholderInfo.targetUser"}}</li>
-                <li>[$sharedDieName] - {{ localize "SHAREDDICE.Settings.PlaceholderInfo.sharedDieName"}}</li>
+                <li>[$dieName] - {{ localize "SHAREDDICE.Settings.PlaceholderInfo.dieName"}}</li>
             </ul>
         </div>
         
-        {{ formGroup fields.msgOnAdd value=die.msgOnAdd name="msgOnAdd" localize=true }}
-        {{ formGroup fields.msgOnRemove value=die.msgOnRemove name="msgOnRemove" localize=true }}
-        {{ formGroup fields.msgOnUse value=die.msgOnUse name="msgOnUse" localize=true }}
-        {{ formGroup fields.msgOnGift value=die.msgOnGift name="msgOnGift" localize=true }}
+        {{ formGroup fields.messages.fields.add value=die.messages.add name="messages.add" localize=true }}
+        {{ formGroup fields.messages.fields.remove value=die.messages.remove name="messages.remove" localize=true }}
+        {{ formGroup fields.messages.fields.use value=die.messages.use name="messages.use" localize=true }}
+        {{ formGroup fields.messages.fields.gift value=die.messages.gift name="messages.gift" localize=true }}
 
     </fieldset>
     {{/if}}

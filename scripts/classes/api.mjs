@@ -1,10 +1,14 @@
 import { MODULE_ID } from "./../CONSTS.mjs";
 import { getQuant, getUser, setQuant, hasEditRole, getAllQuants } from "./UserHandler.mjs";
 import { notify } from "../utils.mjs";
+import DiceType from "./DiceType.mjs";
+import MessageHandler from "./MessageHandler.mjs";
+
 
 /** 
  * @import User from "@client/documents/user.mjs"
  * @import ChatMessage from "@client/documents/chat-message.mjs";
+ * @import Hooks from "@client/helpers/hooks.mjs";
  */
 
 /**
@@ -16,14 +20,15 @@ export function registerAPI() {
         remove,
         use,
         gift,
-        getUserDice
+        getUserDice,
+        DiceType
     };
 
     window[MODULE_ID] = game.modules.get(MODULE_ID).api = API;
 }
 
 /**
- * Gets the quantity of a specific die from the user.
+ * Get the quantity of a specific die from the user.
  * @param {User|string} targetUserOrId 
  * @param {string} [diceId=null]        If falsey, returns a record of all dice on the user instead.
  * @returns {number|import("./UserHandler.mjs").UserDiceData|undefined} 
@@ -54,8 +59,32 @@ async function add(targetUserOrId, diceId) {
     }
 
     const newQuant = prevQuant + 1;
+
+    /**
+     * A hook event that fires before a die is added to a target.
+     * @function shareddice.preAdd
+     * @memberof hookEvents
+     * @param {string} diceId                           Id of the die being added.
+     * @param {User} targetUser                         The user who's die is about to be added.
+     * @param {number} newQuant                         The new quantity of the die the target user would have after adding.
+     * @returns {boolean}                               Return `false` to prevent the die from being added.
+     */
+    if(Hooks.call(`${MODULE_ID}.preAdd`, diceId, targetUser, newQuant) === false) return null;
+
     await setQuant(targetUser, diceId, newQuant);
-    return MessageHandler.send("add", {diceType, targetUser});  //TODO implement Message Handler
+    const ret = await MessageHandler.send("add", diceType, {targetUser});
+
+    /**
+     * A hook event that fires after a die is added to a target.
+     * @function shareddice.add
+     * @memberof hookEvents
+     * @param {string} diceId                           Id of the die being added.
+     * @param {User} targetUser                         The user who's die was added.
+     * @param {number} newQuant                         The quantity of the die the target has.
+     */
+    Hooks.callAll(`${MODULE_ID}.add`, diceId, targetUser, newQuant);
+
+    return ret;
 }
 
 /**
@@ -80,8 +109,32 @@ async function remove(targetUserOrId, diceId) {
     }
 
     const newQuant = prevQuant - 1;
+
+    /**
+     * A hook event that fires before a die is removed from a target.
+     * @function shareddice.preRemove
+     * @memberof hookEvents
+     * @param {string} diceId                           Id of the die being removed.
+     * @param {User} targetUser                         The user who's die is about to be removed.
+     * @param {number} newQuant                         The new quantity of the die the target user would have after removal.
+     * @returns {boolean}                               Return `false` to prevent the die from being removed.
+     */
+    if(Hooks.call(`${MODULE_ID}.preRemove`, diceId, targetUser, newQuant) === false) return null;
+
     await setQuant(targetUser, diceId, newQuant);
-    return MessageHandler.send("remove", {diceType, targetUser});  //TODO implement Message Handler
+    const ret = await MessageHandler.send("remove", diceType, {targetUser});
+
+    /**
+     * A hook event that fires after a die is removed from a target.
+     * @function shareddice.remove
+     * @memberof hookEvents
+     * @param {string} diceId                           Id of the die being removed.
+     * @param {User} targetUser                         The user who's die was removed.
+     * @param {number} newQuant                         The quantity of the die the target has left.
+     */
+    Hooks.callAll(`${MODULE_ID}.remove`, diceId, targetUser, newQuant);
+
+    return ret;
 }
 
 
@@ -100,8 +153,28 @@ async function use(diceId) {
 
     const /** @type {DiceType} */ diceType = DiceType.getFromId(diceId);
 
+    /**
+     * A hook event that fires before a die is used.
+     * @function shareddice.preUse
+     * @memberof hookEvents
+     * @param {string} diceId                           Id of the die being used.
+     * @param {number} newQuant                         The quantity of the die the user would have left after using.
+     * @returns {boolean}                               Return `false` to prevent the die from being used.
+     */
+    if(Hooks.call(`${MODULE_ID}.preUse`, diceId, newQuant) === false) return null;
+
     await setQuant(game.user, diceId, newQuant);
-    return MessageHandler.send("use", {diceType});  //TODO implement Message Handler
+    const ret = await MessageHandler.send("use", diceType); 
+
+    /**
+     * A hook event that fires after a die is used.
+     * @function shareddice.use
+     * @memberof hookEvents
+     * @param {string} diceId                           Id of the die being used.
+     * @param {number} newQuant                         The quantity of the die the user has left.
+     */
+    Hooks.callAll(`${MODULE_ID}.use`, diceId, newQuant);
+    return ret;
 }
 
 /**
@@ -134,7 +207,34 @@ async function gift(targetUserOrId, diceId) {
 
     const newSelfQuant = selfPrevQuant - 1;
     const newTargetQuant = targetPrevQuant + 1;
+
+
+    /**
+     * A hook event that fires before a die is gifted to a target.
+     * @function shareddice.preGift
+     * @memberof hookEvents
+     * @param {string} diceId                           Id of the die being gifted.
+     * @param {User} targetUser                         The user about to receive the die.
+     * @param {number} newSelfQuant                     The quantity of the die the user would have left after gifting.
+     * @param {number} newTargetQuant                   The new quantity of the die the target user would have after gifting.
+     * @returns {boolean}                               Return `false` to prevent the die from being gifted.
+     */
+    if(Hooks.call(`${MODULE_ID}.preGift`, diceId, targetUser, newSelfQuant, newTargetQuant ) === false) return null;
+
     await setQuant(game.user, diceId, newSelfQuant);
     await setQuant(targetUser, diceId, newTargetQuant);
-    return MessageHandler.send("gift", {diceType, targetUser});  //TODO implement Message Handler
+    const ret = await MessageHandler.send("gift", diceType, {targetUser});
+
+    /**
+     * A hook event that fires after a die is gifted to a target.
+     * @function shareddice.gift
+     * @memberof hookEvents
+     * @param {string} diceId                           Id of the die being gifted.
+     * @param {User} targetUser                         The user who received the die.
+     * @param {number} newSelfQuant                     The quantity of the die the user has left after gifting.
+     * @param {number} newTargetQuant                   The new quantity of the die the target user has after gifting.
+     */
+    Hooks.callAll(`${MODULE_ID}.gift`, diceId, targetUser, newSelfQuant, newTargetQuant );
+
+    return ret;
 }

@@ -18,7 +18,9 @@ import SocketManager from "./SocketManager.mjs";
  * @returns {User}
  */
 export function getUser(userOrId) {
-    return userOrId instanceof User ? userOrId : game.users.get(userOrId);
+    const user = userOrId instanceof User ? userOrId : game.users.get(userOrId);
+    if( !(user instanceof User)) throw new Error("Invalid user.");
+    return user;
 }
 
 /**

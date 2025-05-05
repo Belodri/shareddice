@@ -17,12 +17,12 @@ const SETTINGS = {
         config: true,
         type: Number,
         choices: {
-            1: "USER.RolePlayer",
             2: "USER.RoleTrusted",
             3: "USER.RoleAssistant",
             4: "USER.RoleGamemaster"
         },
-        default: 4
+        default: 4,
+        onChange: () => UIHandler.rerender(),
     }
 }
 

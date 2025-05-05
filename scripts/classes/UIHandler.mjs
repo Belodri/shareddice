@@ -4,7 +4,7 @@
  */
 
 import { MODULE_ID } from "../CONSTS.mjs";
-import DiceType from "./DiceType.mjs";
+import { getSetting } from "../settings.mjs";
 import { getAllQuants, hasEditRole } from "./UserHandler.mjs";
 
 export default class UIHandler {
@@ -49,7 +49,8 @@ export default class UIHandler {
     onRenderPlayers(playersApp, html, data) {
         this.#selfIsEditor = hasEditRole(game.user);
         for(const k in this.#tooltips) this.#tooltips[k] = game.i18n.localize(`SHAREDDICE.UI.Tooltips.${k}`);
-        this.#allTypes = DiceType.getDataAll();
+        
+        this.#allTypes = getSetting("diceTypes");
 
         html.querySelectorAll('li[data-user-id]')
             .forEach(li => this.#handleUserLi(li));
@@ -58,76 +59,95 @@ export default class UIHandler {
     /** @param {HTMLElement} li */
     #handleUserLi(li) {
         const user = game.users.get(li.dataset.userId);
-        const ele = this.#makeContainer(user);
-        if(!ele) return;
 
+        const containerData = this.#getContainerData(user);
+        if(!containerData) return;
+
+        const ele = this.#createContainer(containerData)
         li.appendChild(ele);
     }
 
     /**
      * 
-     * @param {User} user 
+     * @param {User} eleUser 
      * @returns {"edit"|"use"|"gift"|null}
      */
-    #getActionForUser(user) {
-        if(hasEditRole(user)) return null;  // Editor users should not have anything displayed
+    #getActionForUser(eleUser) {
+        if(hasEditRole(eleUser)) return null;  // Editor users should not have anything displayed
 
         return this.#selfIsEditor 
             ? "edit"
-            : user.isSelf 
+            : eleUser.isSelf 
                 ? "use"
                 : "gift";
     }
 
+
+    /**
+     * @typedef {object} ContainerData
+     * @property {string} eleUserId
+     * @property {"edit"|"use"|"gift"} action
+     * @property {{typeData: DiceTypeData, quant: number}[]} diceData
+     * @property {boolean} createMoreButton
+     */
+
     /**
      * 
-     * @param {User} user 
+     * @param {User} eleUser 
+     * @returns {ContainerData | undefined}
+     */
+    #getContainerData(eleUser) {
+        const action = this.#getActionForUser(eleUser);
+        if(!action) return;
+
+        const diceData = [];
+
+        // Show own dice on other users if the action is 'gift'
+        const workingQuants = getAllQuants(action === "gift" ? game.user : eleUser) ?? {};
+
+        let createMoreButton = false;
+        for(const [diceId, typeData] of Object.entries(this.#allTypes)) {
+            if(!typeData.enabled) continue;
+            const quant = workingQuants[diceId];
+            const isVisible = quant > 0 || !typeData.hideIfZero;
+            if(isVisible) diceData.push({ typeData, quant });
+            else if(this.#selfIsEditor) createMoreButton = true;
+        }
+
+        return {
+            eleUserId: eleUser.id,
+            action,
+            diceData,
+            createMoreButton
+        }
+    }
+
+
+    /**
+     * 
+     * @param {ContainerData} data 
      * @returns {HTMLDivElement}
      */
-    #makeContainer(user) {
-        const action = this.#getActionForUser(user);
-        if(!action) return null;
-
-        const allQuants = getAllQuants(user) ?? {};
+    #createContainer(data) {
         const contDiv = document.createElement("div");
         contDiv.className = `${MODULE_ID}.container`;
 
-        const makeDiceContDiv = (clickAction, diceId="") => {
-            const diceContDiv = document.createElement("div");
-            diceContDiv.className = "die-container";
-            diceContDiv.dataset.diceId = diceId;
-            diceContDiv.dataset.tooltipText = this.#tooltips[clickAction];
-            diceContDiv.dataset.clickAction = clickAction;
-            diceContDiv.dataset.userId = user.id;
-
-            diceContDiv.addEventListener("click", this.#clickEventListener.bind(this));
-            if(action === "edit") diceContDiv.addEventListener("contextmenu", this.#contextEventListener.bind(this), { capture: true });
-            return diceContDiv;
-        }
-
-        let unlistedEnabledDiceCount = 0;
-        for(const [diceId, typeData] of Object.entries(this.#allTypes)) {
-            if(!typeData.enabled) continue;
-
-            const quant = allQuants[diceId];
-            if(typeof quant !== "number") {
-                unlistedEnabledDiceCount++;
-                continue;
-            }
+        for(const {typeData, quant} of data.diceData) {
+            const diceContDiv = this.#makeDiceContainerDiv(data.action, data.eleUserId, typeData.id)
 
             const imgEle = document.createElement("img");
             imgEle.src = typeData.img;
+            diceContDiv.appendChild(imgEle);
+
             const spanEle = document.createElement("span");
             spanEle.textContent = quant;
-
-            const diceContDiv = makeDiceContDiv(action, diceId);
-            diceContDiv.appendChild(imgEle);
             diceContDiv.appendChild(spanEle);
+
             contDiv.appendChild(diceContDiv);
         }
-        
-        if(this.#selfIsEditor && unlistedEnabledDiceCount) {
-            const diceContDiv = makeDiceContDiv("more");
+
+        if(this.#selfIsEditor && data.createMoreButton) {
+            const diceContDiv = this.#makeDiceContainerDiv("more", data.eleUserId);
 
             const addI = document.createElement("i");
             addI.className = "fa-solid fa-square-plus";
@@ -135,7 +155,28 @@ export default class UIHandler {
 
             contDiv.appendChild(diceContDiv);
         }
+
         return contDiv;
+    }
+
+    /**
+     * 
+     * @param {"edit"|"use"|"gift"} action 
+     * @param {string} eleUserId 
+     * @param {string} diceId 
+     * @returns {HTMLDivElement}
+     */
+    #makeDiceContainerDiv(action, eleUserId, diceId="" ) {
+        const diceContDiv = document.createElement("div");
+        diceContDiv.className = "die-container";
+        diceContDiv.dataset.diceId = diceId;
+        diceContDiv.dataset.tooltipText = this.#tooltips[action];
+        diceContDiv.dataset.clickAction = action;
+        diceContDiv.dataset.userId = eleUserId;
+
+        diceContDiv.addEventListener("click", this.#clickEventListener.bind(this));
+        if(action === "edit") diceContDiv.addEventListener("contextmenu", this.#contextEventListener.bind(this), { capture: true });
+        return diceContDiv;
     }
 
     //#region Event Handling
@@ -172,22 +213,30 @@ export default class UIHandler {
     }
 
     #onMore = foundry.utils.debounce((targetUserId, x, y) => {
-        this.#selectAndAddDialog(targetUserId, x, y);
+        try {
+            this.#selectAndAddDialog(targetUserId, x, y);
+        } catch(err) { console.error(err); }   
     }, 100);
     
 
     #onEdit = foundry.utils.debounce((diceId, targetUserId, isRemove=false) => {
-        if(isRemove) this.#api.remove(targetUserId, diceId);
-        else this.#api.add(targetUserId, diceId);
+        try {
+            if(isRemove) this.#api.remove(targetUserId, diceId);
+            else this.#api.add(targetUserId, diceId);
+        } catch(err) { console.error(err); }
     }, 100);
 
 
     #onUse = foundry.utils.debounce((diceId) => {
-        this.#api.use(diceId);
+        try {
+            this.#api.use(diceId);
+        } catch(err) { console.error(err); }
     }, 100);
 
     #onGift = foundry.utils.debounce((diceId, targetUserId) => {
-        this.#api.gift(targetUserId, diceId);
+        try {
+            this.#api.gift(targetUserId, diceId);
+        } catch(err) { console.error(err); }
     }, 100);
 
     //#endregion
@@ -205,16 +254,18 @@ export default class UIHandler {
             pos.left = x;
             pos.top = y;
         }
-    
+
         const userQuants = getAllQuants(targetUserId) ?? {};
+        const selectOptions = Object.values(this.#allTypes)
+            .filter(data => data.enabled && !userQuants[data.id])
+    
         const selectField = foundry.applications.fields.createSelectInput({
             type: "single",
             name: "id",
             sort: true,
             valueAttr: "id",
             labelAttr: "name",
-            options: Object.values(this.#allTypes)
-                .filter(data => data.enabled && !(data.id in userQuants)),
+            options: selectOptions,
         });
             
         const formGroup = foundry.applications.fields.createFormGroup({

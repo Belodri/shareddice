@@ -1,6 +1,7 @@
 /** @import FormDataExtended from "@client/applications/ux/form-data-extended.mjs" */
 import DiceType from "../classes/DiceType.mjs";
 import { MODULE_ID } from "../CONSTS.mjs";
+import { getSetting, setSetting } from "../settings.mjs";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -15,7 +16,7 @@ export default class DiceTypesSettingMenu extends HandlebarsApplicationMixin(App
 
     constructor(...args) {
         super(...args);
-        this.#diceData = foundry.utils.deepClone(DiceType.getDataAll());
+        this.#diceData = foundry.utils.deepClone(getSetting("diceTypes"));
     }
 
     static DEFAULT_OPTIONS = {
@@ -43,6 +44,22 @@ export default class DiceTypesSettingMenu extends HandlebarsApplicationMixin(App
     static PARTS = {
         form: { template: `modules/${MODULE_ID}/templates/DiceTypesSettingMenu.hbs`, scrollable: [""] },
         footer: { template: "templates/generic/form-footer.hbs" }   
+    }
+
+    async _prepareContext() {
+        const selectDiceOptions = [
+            { id: "", name: game.i18n.localize("SHAREDDICE.Settings.EmptySelectLabel")},
+            ...Object.values(this.#diceData)
+        ];
+
+        return {
+            selectDiceOptions,
+            die: this.#diceData[this.#selectedId] ?? {},
+            fields: DiceType.schema.fields,
+            buttons: [
+                { type: "save", icon: "fa-solid fa-save", label: "SETTINGS.Save", action: "save" },
+            ]
+        };
     }
 
     //#region Actions
@@ -100,18 +117,17 @@ export default class DiceTypesSettingMenu extends HandlebarsApplicationMixin(App
 
     /**
      * Saves the current configuration to settings. Asks for confirmation if deletions were made.
-     * 
      * @this {DiceTypesSettingMenu}
      * @returns {Promise<void>}
      */
     static async #onSave() {
-        const settingData = DiceType.getDataAll();
+        const settingData = getSetting("diceTypes");
 
         const deleted = [];
         for(const id in settingData) if(!this.#diceData[id]) deleted.push(settingData[id]);
-        if(deleted.length && !await this.confirmDelete(deleted)) return;
+        if(deleted.length && !await this.#confirmDelete(deleted)) return;
 
-        await DiceType._setDataAll(this.#diceData);
+        await setSetting("diceTypes", this.#diceData);
         this.close();
     }
 
@@ -120,7 +136,7 @@ export default class DiceTypesSettingMenu extends HandlebarsApplicationMixin(App
      * @param {import("../classes/DiceType.mjs").DiceTypeData[]} deleted    The data of the dice types about to be deleted.
      * @returns {Promise<boolean>}      A Promise which resolves to true if the user decides to delete
      */
-    async confirmDelete(deleted) {
+    async #confirmDelete(deleted) {
         const delList = `<ul>${deleted.reduce((acc, curr) => acc += `<li>${curr.name}</li>`, "")}</ul>`;
         const content = `<div><p>${game.i18n.localize("AreYouSure")} ${game.i18n.localize("SHAREDDICE.Settings.DeleteDialog.Warning")}</p>${delList}</div>`;
         return foundry.applications.api.DialogV2.confirm({
@@ -136,20 +152,4 @@ export default class DiceTypesSettingMenu extends HandlebarsApplicationMixin(App
     }
 
     //#endregion
-
-    async _prepareContext() {
-        const selectDiceOptions = [
-            { id: "", name: game.i18n.localize("SHAREDDICE.Settings.EmptySelectLabel")},
-            ...Object.values(this.#diceData)
-        ];
-
-        return {
-            selectDiceOptions,
-            die: this.#diceData[this.#selectedId] ?? {},
-            fields: DiceType.schema.fields,
-            buttons: [
-                { type: "save", icon: "fa-solid fa-save", label: "SETTINGS.Save", action: "save" },
-            ]
-        };
-    }
 }
