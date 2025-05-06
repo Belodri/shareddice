@@ -75,7 +75,8 @@
         "Notifications": {
             "onNegative": "Shared Dice can not have negative values.",
             "onOverLimit": "The limit for how many {diceTypeName} a user can have is {diceTypeLimit}.",
-            "roleCannotHave": "Users with Add/Remove permission cannot have dice themselves."
+            "roleCannotHave": "Users with Add/Remove permission cannot have dice themselves.",
+            "noActiveOwner": "No owner for the target document currently active. See console for details."
         },
         "UI": {
             "Tooltips": {

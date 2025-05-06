@@ -72,7 +72,7 @@ export default class SocketManager {
             : game.users.find(u => u.active && doc.testUserPermission(u, "OWNER"));
 
         if (!best) {
-            notify(`NoActiveOwner`, "error", { console: false });
+            notify(`noActiveOwner`, "error", { console: false });
             console.error(`No active owner for document`, doc);
             throw new Error(`No active owner for document`);
         }
