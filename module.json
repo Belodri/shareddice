@@ -1,7 +1,7 @@
 {
     "id": "shareddice",
     "title": "Shared Dice",
-    "version": "1.0.0",
+    "version": "#{VERSION}#",
     "description": "Allows GMs to give players a number of dice they can expend themselves or share with other players.",
     "authors": [{
         "name": "Belodri",
@@ -23,10 +23,12 @@
         "verified": "13.341",
         "maximum": 13
     },
-    "url": "",
-    "manifest": "",
-    "download": "",
-    "changelog": "",
+    "url": "#{URL}#",
+    "manifest": "#{MANIFEST}#",
+    "download": "#{DOWNLOAD}#",
+    "changelog": "#{CHANGELOG}#",
+    "license": "LICENSE",
+    "readme": "README.md",
     "flags": {
         "hotReload": {
             "extensions": [
