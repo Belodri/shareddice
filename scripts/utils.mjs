@@ -1,4 +1,4 @@
-import { MODULE_ID, LOCALIZE_KEY } from "./CONSTS.mjs";
+import { LOCALIZE_KEY } from "./CONSTS.mjs";
 
 /**
  * @typedef NotificationOptions

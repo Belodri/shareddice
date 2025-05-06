@@ -4,19 +4,15 @@
     "type": "module",
     "description": "FoundryVTT module that allows GMs to give players a number of dice they can expend themselves or share with other players.",
     "main": "scripts/module.mjs",
+    "repository": {
+        "type": "git",
+        "url": "github:belodri/shareddice"
+    },
     "scripts": {
         "lint": "eslint .",
-        "createFoundrySymlinks": "node ./tools/create-foundry-symlinks.mjs",
-        "symlink:module": "node ./npm-scripts/create-symlinks.js --lt module",
-        "symlink:systems": "node ./npm-scripts/create-symlinks.js --lt systems",
-        "symlink:foundry": "node ./npm-scripts/create-symlinks.js --lt foundry",
-        "symlink:all": "node ./npm-scripts/create-symlinks.js --lt all",
-        "clean:module": "node ./npm-scripts/create-symlinks.js --lt module --clean",
-        "clean:systems": "node ./npm-scripts/create-symlinks.js --lt systems --clean",
-        "clean:foundry": "node ./npm-scripts/create-symlinks.js --lt foundry --clean",
-        "clean:all": "node ./npm-scripts/create-symlinks.js all --lt --clean"
+        "createFoundrySymlinks": "node ./tools/create-foundry-symlinks.mjs"
     },
-    "author": "Belodri",
+    "author": "David Haas <dave.belodri@gmail.com>",
     "license": "MIT",
     "devDependencies": {
         "eslint": "^9.15.0",

@@ -11,8 +11,4 @@ Hooks.once("ready", () => {
     registerAPI();
     SocketManager.registerSocket();
 });
-
 Hooks.on("renderPlayers", UIHandler.onRenderPlayers);
-
-// Hooks.on("updateUser", SharedDice.onUpdateUser);
-
