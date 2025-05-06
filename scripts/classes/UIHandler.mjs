@@ -353,7 +353,9 @@ export default class UIHandler {
 
         const userQuants = getAllQuants(targetUserId) ?? {};
         const selectOptions = Object.values(this.#allTypes)
-            .filter(data => data.enabled && !userQuants[data.id]);
+            .filter(data => data.enabled 
+                && (typeof userQuants[data.id] === "undefined" ||  (!userQuants[data.id] && data.hideIfZero))
+            );
     
         const selectField = foundry.applications.fields.createSelectInput({
             type: "single",
