@@ -76,6 +76,16 @@
             "onNegative": "Shared Dice can not have negative values.",
             "onOverLimit": "The limit for how many {diceTypeName} a user can have is {diceTypeLimit}.",
             "roleCannotHave": "Users with Add/Remove permission cannot have dice themselves."
+        },
+        "UI": {
+            "Tooltips": {
+                "edit": "{dieName} | Add/Remove",
+                "use": "{dieName} | Use",
+                "gift": "{dieName} | Gift",
+                "openEditor": "Add more",
+                "expand": "Expand",
+                "collapse": "Collapse"
+            }
         }
     }
 }
