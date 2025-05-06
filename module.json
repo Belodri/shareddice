@@ -26,7 +26,6 @@
     "url": "#{URL}#",
     "manifest": "#{MANIFEST}#",
     "download": "#{DOWNLOAD}#",
-    "changelog": "#{CHANGELOG}#",
     "license": "LICENSE",
     "readme": "README.md",
     "flags": {
