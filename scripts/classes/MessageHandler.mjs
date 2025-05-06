@@ -50,11 +50,11 @@ export default class MessageHandler {
          * A hook event that fires before a chat message is created.
          * @function shareddice.preCreateChatMessage
          * @memberof hookEvents
-         * @param {string} action                                               The action for which the chat message is about to be created.
-         * @param {string} diceId                                               The id of the dice type of the used in the action.
-         * @param {User} [targetUser=undefined]                                 The target user of the action, if the action has a target. 
-         * @param {import("@common/documents/_types.mjs").ChatMessageData} data The message data used to create the message. Can be mutated.
-         * @returns {boolean}                                                   Return `false` to prevent the chat message from being created.
+         * @param {string} action                                                   The action for which the chat message is about to be created.
+         * @param {string} diceId                                                   The id of the dice type of the used in the action.
+         * @param {User} [targetUser=undefined]                                     The target user of the action, if the action has a target. 
+         * @param {import("@common/documents/_types.mjs").ChatMessageData} msgData  The message data used to create the message. Can be mutated.
+         * @returns {boolean}                                                       Return `false` to prevent the chat message from being created.
          */
         if(Hooks.call(`${MODULE_ID}.preCreateChatMessage`, action, diceId, targetUser, msgData) === false) return null;
         
@@ -67,7 +67,7 @@ export default class MessageHandler {
          * @param {string} action                                                   The action for which the chat message has been created.
          * @param {string} diceId                                                   The id of the dice type of the used in the action.
          * @param {User} [targetUser=undefined]                                     The target user of the action, if the action had a target. 
-         * @param {import("@common/documents/_types.mjs").ChatMessageData} message  The created chat message.
+         * @param {ChatMessage} message                                             The created chat message.
          */
         Hooks.callAll(`${MODULE_ID}.createChatMessage`, action, diceId, targetUser, message );
 
