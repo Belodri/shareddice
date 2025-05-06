@@ -86,6 +86,13 @@
                 "expand": "Expand",
                 "collapse": "Collapse"
             }
+        },
+        "Dialogs": {
+            "SelectMore": {
+                "Title": "Grant More Dice",
+                "AddButton": "Add",
+                "Label": "Select die to add"
+            }
         }
     }
 }

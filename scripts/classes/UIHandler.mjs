@@ -367,7 +367,6 @@ export default class UIHandler {
         const formGroup = foundry.applications.fields.createFormGroup({
             input: selectField,
             label: "SHAREDDICE.Dialogs.SelectMore.Label",
-            hint: "SHAREDDICE.Dialogs.SelectMore.Hint",
             localize: true,
         }).outerHTML;
     
@@ -376,7 +375,7 @@ export default class UIHandler {
             window: { title: game.i18n.localize("SHAREDDICE.Dialogs.SelectMore.Title") },
             position: pos,
             ok: {
-                label: "SHAREDDICE.Dialogs.SelectMore.Add",
+                label: "SHAREDDICE.Dialogs.SelectMore.AddButton",
                 callback: (_event, button) => new foundry.applications.ux.FormDataExtended(button.form).object.id
             },
             rejectClose: false,
