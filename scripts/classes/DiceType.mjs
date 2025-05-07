@@ -61,11 +61,6 @@ export default class DiceType extends foundry.abstract.DataModel {
                 label: "SHAREDDICE.Fields.maxPerUser.Label",
                 hint: "SHAREDDICE.Fields.maxPerUser.Hint",
             }),
-            hideIfZero: new BooleanField({
-                initial: true,
-                label: "SHAREDDICE.Fields.hideIfZero.Label",
-                hint: "SHAREDDICE.Fields.hideIfZero.Hint"
-            }),
             messages: new SchemaField({
                 add: new StringField({
                     initial: () => game.i18n.localize("SHAREDDICE.Fields.msgOnAdd.Placeholder"),

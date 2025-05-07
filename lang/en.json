@@ -47,52 +47,41 @@
                 "Label": "Maximum Amount per User",
                 "Hint": "The maximum number of dice of this type a single user can possess. (0 for unlimited)"
             },
-            "hideIfZero": {
-                "Label": "Hide if zero",
-                "Hint": "Should this die be hidden from the player list if a player has remaining 0 uses?"
-            },
             "msgOnAdd": {
                 "Label": "Message on Add",
                 "Hint": "Chat message shown when a die is added to a user. If empty, no message is sent.",
-                "Placeholder": "[$sourceUser] gave [$targetUser] a [$dieName]."
+                "Placeholder": "[$sourceUser] gave [$targetUser] one [$dieName]."
             },
             "msgOnRemove": {
                 "Label": "Message on Remove",
                 "Hint": "Chat message shown when a die is removed from a user. If empty, no message is sent.",
-                "Placeholder": "[$sourceUser] removed a [$dieName] from [$targetUser]."
+                "Placeholder": "[$sourceUser] removed one [$dieName] from [$targetUser]."
             },
             "msgOnUse": {
                 "Label": "Message on Use",
                 "Hint": "Chat message shown when a user uses/consumes a die. If empty, no message is sent.",
-                "Placeholder": "[$sourceUser] has used a [$dieName]"
+                "Placeholder": "[$sourceUser] used one [$dieName]."
             },
             "msgOnGift": {
                 "Label": "Message on Gift",
                 "Hint": "Chat message shown when a user gives a die to another user. If empty, no message is sent.",
-                "Placeholder": "[$sourceUser] has gifted a [$dieName] to [$targetUser]"
+                "Placeholder": "[$sourceUser] gifted one [$dieName] to [$targetUser]."
             }
         },
         "Notifications": {
             "onNegative": "Shared Dice can not have negative values.",
-            "onOverLimit": "The limit for how many {diceTypeName} a user can have is {diceTypeLimit}.",
-            "roleCannotHave": "Users with Add/Remove permission cannot have dice themselves.",
-            "noActiveOwner": "No owner for the target document currently active. See console for details."
+            "onOverLimit": "Users cannot have more than {diceTypeLimit} uses of {diceTypeName}.",
+            "roleCannotHave": "Users with Add/Remove permission cannot have any Shared Dice themselves.",
+            "noActiveOwner": "No owner for the target document currently active. See console for details.",
+            "noUsesRemaining": "No uses of {diceTypeName} remaining."
         },
         "UI": {
             "Tooltips": {
                 "edit": "{dieName} | Add/Remove",
                 "use": "{dieName} | Use",
                 "gift": "{dieName} | Gift",
-                "openEditor": "Add more",
                 "expand": "Expand",
                 "collapse": "Collapse"
-            }
-        },
-        "Dialogs": {
-            "SelectMore": {
-                "Title": "Grant More Dice",
-                "AddButton": "Add",
-                "Label": "Select die to add"
             }
         }
     }

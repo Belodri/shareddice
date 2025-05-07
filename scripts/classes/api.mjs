@@ -144,14 +144,14 @@ async function remove(targetUserOrId, diceId) {
  * @returns {Promise<ChatMessage|true|null>} Resolves to the resulting ChatMessage, true if no message template was configured, or null on failure.
  */
 async function use(diceId) {
+    const /** @type {DiceType} */ diceType = DiceType.getFromId(diceId);
+
     const prevQuant = getQuant(game.user, diceId) ?? 0;
     if(prevQuant <= 0) {
-        notify("onNegative", "warn");
+        notify("noUsesRemaining", "warn", {format: {diceTypeName: diceType.name}});
         return null;
     }
     const newQuant = prevQuant - 1;
-
-    const /** @type {DiceType} */ diceType = DiceType.getFromId(diceId);
 
     /**
      * A hook event that fires before a die is used.
@@ -195,7 +195,7 @@ async function gift(targetUserOrId, diceId) {
 
     const selfPrevQuant = getQuant(game.user, diceId) ?? 0;
     if(selfPrevQuant <= 0) {
-        notify("onNegative", "warn");
+        notify("noUsesRemaining", "warn", {format: {diceTypeName: diceType.name}});
         return null;
     }
 
