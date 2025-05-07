@@ -8,7 +8,7 @@ Shared Dice is a Foundry VTT module that allows Game Masters to give players var
 - **Management:** Users with editing permissions can easily add or remove dice from players directly through the player list interface.
 - **Player Usage:** Players can expend their own dice or gift dice from their own pool to other players.
 - **Customizable Chat Messages:** Tailor the chat messages for actions like adding, removing, using, or gifting dice. Messages are configured per dice type and per action.
-- **Dynamic UI:** Intelligently handles users with many dice types by collapsing less-used dice into an expandable overflow section in the player list.
+- **Dynamic UI:** Intelligently handles large number of different dice types by collapsing additional dice types beyond the initial display count into an expandable overflow section in the player list.
 
 # Installation
 
@@ -22,44 +22,44 @@ The primary configuration for this module involves defining the different **Dice
 - **Image:** An icon to represent the die in the UI.
 - **Enabled:** A checkbox to control if this dice type is currently active. Disabled dice are hidden and not usable but their data is preserved and they can be reenabled at any time. This allows you to temporarily remove a dice type without losing player counts or its specific configurations.
 - **Limit:** The maximum number of this dice type a player can hold.
-- **Hide if Zero:** If checked, this dice type will not be displayed next to a player's name if their quantity for that die is zero. Users with Add/Remove permissions will still have an option (the "Add More Dice" button) to add this dice type to players even if it's hidden due to this setting.
 - **Message Templates:** For each action (`add`, `remove`, `use`, `gift`), you can define a chat message template. If a template is left blank, no chat message will be sent for that specific action and dice type.
 
+### Chat Message Placeholders
 
-# Usage & Interface
-
-
-### Editor View (e.g., GM Perspective)
-
-Users with editing permissions (typically the GM) have extended controls over players who lack these permissions.
-
-![Player List view of Shared Dice UI from editor perspective](media/playerListEditorView.png)
-
-- **Left-clicking** a die icon will **add one** of that die type to the player, up to the defined limit for that die.
-- **Right-clicking** on a die icon will **remove one** of that die type from the player, down to zero.
-- **Plus Icon** opens a dialog through which additional dice types set to 'Hide if Zero' can be granted.
-- **Overflow Toggle** toggles the view of additional dice types if a user has more than 3.
-
-
-### Player View
-
-As a player without editing permissions, you will see **your own** available shared dice types and quantities displayed next to both your own as well as other players' names.
-
-![Player List view of Shared Dice UI from player perspective](media/playerListPlayerView.png)
-
-- **Left-clicking** a die icon next to your own name will **use** one of that die type if you have remaining uses.
-- **Left-clicking** a die icon next to another player's name will **gift** one of that die type to that player if you have remaining uses.
-- **Overflow Toggle** toggles the view of additional dice types if you have more than 3.
-
-# Chat Message Placeholders
-
-When configuring message templates in the module settings, you can use the following placeholders. They will be automatically replaced with the relevant information when a message is generated:
+When configuring message templates for a given dice type, you can use the following placeholders. They will be automatically replaced with the relevant information when a message is generated:
 
 - `[$sourceUser]` - Replaced with the name of the user who initiated the action.
 - `[$targetUser]` - Replaced with the name of the user who is the target of the action.
 - `[$dieName]` - Replaced with the configured name of the die involved in the action.
 
 **Example Gift Message Template:** `[$sourceUser] generously gifts one [$dieName] to [$targetUser]!`
+
+
+# Usage & Interface
+
+![Player List view of Shared Dice UI](media/playerListView.png)
+
+### Dice Icons (Editor)
+
+For users with editing permissions (typically the GM), clicking on dice icons has the following effects:
+
+- **Add (click):** Adds one of that die type to the player, up to the defined limit for that die.
+- **Remove (right-click):** Removes one of that die type from the player, down to zero.
+
+### Dice Icons (Player)
+
+For users without editing permissions, the functionality of left-clicks on dice icons depends on if they click on one of their own die (next to their username) or on another player's die:
+
+- **Use (click own die):** Uses one of that die if the player has any uses remaining.
+- **Gift (click others' die):** Gifts one of the die to the player, up to the defined limit for that die type, provided the giving player has at least one use remaining.
+
+### Overflow Toggle
+
+Only the first 3 enabled dice types are displayed on the player list. Any additional enabled dice types can be viewed by toggling the overflow button.
+
+- **Toggle Single Overflow (click):** Expands or collapses the view of additional dice types for that user.
+- **Toggle All Overflows (right-click):** Expands or collapses the view of additional dice types for all users.
+
 
 # API
 

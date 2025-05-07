@@ -52,9 +52,9 @@
             align-items: center;
             text-align: center;
             color: black;
-            text-shadow: 0 0 1px white, 0 0 1px white, 0 0 1px white, 0 0 1px white;
+            text-shadow: 0 0 2px white, 0 0 2px white, 0 0 2px white, 0 0 2px white;
             font-weight: bolder;
-            font-size: 1.5em;
+            font-size: 1.6em;
         }
     }
 }
@@ -65,5 +65,5 @@
     border: 1px solid var(--border-color); 
     border-radius: 8px;
     padding: 3px 6px;
-    left: 11.3vw;
+    margin-left: 2px;
 }
