@@ -22,34 +22,34 @@ The primary configuration for this module involves defining the different **Dice
 - **Image:** An icon to represent the die in the UI.
 - **Enabled:** A checkbox to control if this dice type is currently active. Disabled dice are hidden and not usable but their data is preserved and they can be reenabled at any time. This allows you to temporarily remove a dice type without losing player counts or its specific configurations.
 - **Limit:** The maximum number of this dice type a player can hold.
-- **Hide if Zero:** If checked, this dice type will not be displayed next to a player's name if their quantity for that die is zero. Users with Add/Remove permissions will still have an option (the "Add More Dice" button) to add this dice type to players even if it's hidden due to this setting.
 - **Message Templates:** For each action (`add`, `remove`, `use`, `gift`), you can define a chat message template. If a template is left blank, no chat message will be sent for that specific action and dice type.
 
 
 # Usage & Interface
 
+![Player List view of Shared Dice UI](media/playerListView.png)
 
-### Editor View (e.g., GM Perspective)
+### Dice Icons (Editor)
 
-Users with editing permissions (typically the GM) have extended controls over players who lack these permissions.
+For users with editing permissions (typically the GM), clicking on dice icons has the following effects:
 
-![Player List view of Shared Dice UI from editor perspective](media/playerListEditorView.png)
+- **Add (click):** Adds one of that die type to the player, up to the defined limit for that die.
+- **Remove (right-click):** Removes one of that die type from the player, down to zero.
 
-- **Left-clicking** a die icon will **add one** of that die type to the player, up to the defined limit for that die.
-- **Right-clicking** on a die icon will **remove one** of that die type from the player, down to zero.
-- **Plus Icon** opens a dialog through which additional dice types set to 'Hide if Zero' can be granted.
-- **Overflow Toggle** toggles the view of additional dice types if a user has more than 3.
+### Dice Icons (Player)
 
+For users users without editing permissions, the functionality of left-clicks on dice icons depends on if they click on one of their own die (next to their username) or on another player's die:
 
-### Player View
+- **Use (click own die):** Uses one of that die if the player has any uses remaining.
+- **Gift (click others' die):** Gifts one of the die to the player, up to the defined limit for that die type, provided the giving player has at least one use remaining.
 
-As a player without editing permissions, you will see **your own** available shared dice types and quantities displayed next to both your own as well as other players' names.
+### Overflow Toggle
 
-![Player List view of Shared Dice UI from player perspective](media/playerListPlayerView.png)
+Only the first 3 enabled dice types are displayed on the player list. Any additional enabled dice types can be viewed by toggling the overflow button.
 
-- **Left-clicking** a die icon next to your own name will **use** one of that die type if you have remaining uses.
-- **Left-clicking** a die icon next to another player's name will **gift** one of that die type to that player if you have remaining uses.
-- **Overflow Toggle** toggles the view of additional dice types if you have more than 3.
+- **Toggle Single Overflow (click):** Expands or collapses the view of additional dice types for that user.
+- **Toggle All Overflows (right-click):** Expands or collapses the view of additional dice types for all users.
+
 
 # Chat Message Placeholders
 
