@@ -8,7 +8,7 @@ Shared Dice is a Foundry VTT module that allows Game Masters to give players var
 - **Management:** Users with editing permissions can easily add or remove dice from players directly through the player list interface.
 - **Player Usage:** Players can expend their own dice or gift dice from their own pool to other players.
 - **Customizable Chat Messages:** Tailor the chat messages for actions like adding, removing, using, or gifting dice. Messages are configured per dice type and per action.
-- **Dynamic UI:** Intelligently handles users with many dice types by collapsing less-used dice into an expandable overflow section in the player list.
+- **Dynamic UI:** Intelligently handles large number of different dice types by collapsing additional dice types beyond the initial display count into an expandable overflow section in the player list.
 
 # Installation
 
@@ -24,6 +24,16 @@ The primary configuration for this module involves defining the different **Dice
 - **Limit:** The maximum number of this dice type a player can hold.
 - **Message Templates:** For each action (`add`, `remove`, `use`, `gift`), you can define a chat message template. If a template is left blank, no chat message will be sent for that specific action and dice type.
 
+### Chat Message Placeholders
+
+When configuring message templates for a given dice type, you can use the following placeholders. They will be automatically replaced with the relevant information when a message is generated:
+
+- `[$sourceUser]` - Replaced with the name of the user who initiated the action.
+- `[$targetUser]` - Replaced with the name of the user who is the target of the action.
+- `[$dieName]` - Replaced with the configured name of the die involved in the action.
+
+**Example Gift Message Template:** `[$sourceUser] generously gifts one [$dieName] to [$targetUser]!`
+
 
 # Usage & Interface
 
@@ -38,7 +48,7 @@ For users with editing permissions (typically the GM), clicking on dice icons ha
 
 ### Dice Icons (Player)
 
-For users users without editing permissions, the functionality of left-clicks on dice icons depends on if they click on one of their own die (next to their username) or on another player's die:
+For users without editing permissions, the functionality of left-clicks on dice icons depends on if they click on one of their own die (next to their username) or on another player's die:
 
 - **Use (click own die):** Uses one of that die if the player has any uses remaining.
 - **Gift (click others' die):** Gifts one of the die to the player, up to the defined limit for that die type, provided the giving player has at least one use remaining.
@@ -50,16 +60,6 @@ Only the first 3 enabled dice types are displayed on the player list. Any additi
 - **Toggle Single Overflow (click):** Expands or collapses the view of additional dice types for that user.
 - **Toggle All Overflows (right-click):** Expands or collapses the view of additional dice types for all users.
 
-
-# Chat Message Placeholders
-
-When configuring message templates in the module settings, you can use the following placeholders. They will be automatically replaced with the relevant information when a message is generated:
-
-- `[$sourceUser]` - Replaced with the name of the user who initiated the action.
-- `[$targetUser]` - Replaced with the name of the user who is the target of the action.
-- `[$dieName]` - Replaced with the configured name of the die involved in the action.
-
-**Example Gift Message Template:** `[$sourceUser] generously gifts one [$dieName] to [$targetUser]!`
 
 # API
 
