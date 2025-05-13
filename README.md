@@ -115,6 +115,16 @@ async function use(diceId)
 async function gift(targetUserOrId, diceId)
 ```
 
+```js
+/**
+ * Find a DiceType by name.
+ * @param {string} dieName                  The name to search for.
+ * @param {boolean} [rawData=false]         If true, returns raw data objects instead of DiceType instances.
+ * @returns {DiceType[]|object[]}           An array of all dice types with that name or an array of objects of said dice types.
+ */
+function findDiceTypesByName(dieName, rawData=false)
+```
+
 Additionally the DiceType data model is accessible through the `DiceType` property on the API.
 
 # Hooks

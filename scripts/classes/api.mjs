@@ -3,6 +3,7 @@ import { getQuant, getUser, setQuant, hasEditRole, getAllQuants } from "./UserHa
 import { notify } from "../utils.mjs";
 import DiceType from "./DiceType.mjs";
 import MessageHandler from "./MessageHandler.mjs";
+import { getSetting } from "../settings.mjs";
 
 
 /** 
@@ -21,10 +22,23 @@ export function registerAPI() {
         use,
         gift,
         getUserDice,
+        findDiceTypesByName,
         DiceType
     };
 
     window[MODULE_ID] = game.modules.get(MODULE_ID).api = API;
+}
+
+/**
+ * Find a DiceType by name.
+ * @param {string} dieName              The name to search for.
+ * @param {boolean} [rawData=false]     If true, returns raw data objects instead of DiceType instances.
+ * @returns {DiceType[]|import("./DiceType.mjs").DiceTypeData[]}    An array of all dice types with that name or an array of objects of said dice types.
+ */
+function findDiceTypesByName(dieName, rawData=false) {
+    const allTypesData = getSetting("diceTypes");
+    const foundData = Object.values(allTypesData).filter(data => data.name === dieName);
+    return rawData ? foundData : foundData.map(data => new DiceType(data));
 }
 
 /**
