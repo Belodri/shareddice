@@ -8,7 +8,7 @@ Shared Dice is a Foundry VTT module that allows Game Masters to give players var
 - **Management:** Users with editing permissions can easily add or remove dice from players directly through the player list interface.
 - **Player Usage:** Players can expend their own dice or gift dice from their own pool to other players.
 - **Customizable Chat Messages:** Tailor the chat messages for actions like adding, removing, using, or gifting dice. Messages are configured per dice type and per action.
-- **Dynamic UI:** Intelligently handles large number of different dice types by collapsing additional dice types beyond the initial display count into an expandable overflow section in the player list.
+- **Dynamic UI:** Intelligently handles large number of different dice types by collapsing additional dice types beyond the initial display count into an expandable overflow section in the player list. The sorting can be configured via settings.
 
 # Installation
 
@@ -22,6 +22,7 @@ The primary configuration for this module involves defining the different **Dice
 - **Image:** An icon to represent the die in the UI.
 - **Enabled:** A checkbox to control if this dice type is currently active. Disabled dice are hidden and not usable but their data is preserved and they can be reenabled at any time. This allows you to temporarily remove a dice type without losing player counts or its specific configurations.
 - **Limit:** The maximum number of this dice type a player can hold.
+- **Sort Priority:** Determines the order in which dice are displayed on the player list. Dice with a higher priority are displayed closer to the user names.
 - **Message Templates:** For each action (`add`, `remove`, `use`, `gift`), you can define a chat message template. If a template is left blank, no chat message will be sent for that specific action and dice type.
 
 ### Chat Message Placeholders
