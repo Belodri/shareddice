@@ -20,7 +20,7 @@
     "styles": ["styles/shareddice.css"],
     "compatibility": {
         "minimum": 13,
-        "verified": "13.341",
+        "verified": "13.342",
         "maximum": 13
     },
     "url": "#{URL}#",
