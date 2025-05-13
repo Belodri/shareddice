@@ -16,6 +16,7 @@ import { getSetting, setSetting } from "../settings.mjs";
  * @property {string} name                      The user-facing name for this die type (e.g., "Inspiration", "Hero Point"). Used in UI elements and chat messages via [$shareDieName].
  * @property {string} img                       The file path to the img representing this die type.
  * @property {number} maxPerUser                The maximum number of dice of this type a single user can possess. (0 for unlimited)
+ * @property {number} sortPriority              Determines the order in which dice are displayed next to the user names. Higher priority means closer to the user name.
  * @property {MessageTemplates} messages
  */
 
@@ -61,6 +62,13 @@ export default class DiceType extends foundry.abstract.DataModel {
                 label: "SHAREDDICE.Fields.maxPerUser.Label",
                 hint: "SHAREDDICE.Fields.maxPerUser.Hint",
             }),
+            sortPriority: new NumberField({
+                nullable: false,
+                initial: 0,
+                required: true,
+                label: "SHAREDDICE.Fields.sortPriority.Label",
+                hint: "SHAREDDICE.Fields.sortPriority.Hint",
+            }),
             messages: new SchemaField({
                 add: new StringField({
                     initial: () => game.i18n.localize("SHAREDDICE.Fields.msgOnAdd.Placeholder"),
@@ -86,7 +94,7 @@ export default class DiceType extends foundry.abstract.DataModel {
                     label: "SHAREDDICE.Fields.msgOnGift.Label",
                     hint: "SHAREDDICE.Fields.msgOnGift.Hint"
                 })
-            }),
+            })
         }
     }
 
