@@ -107,6 +107,7 @@ export default class UIHandler {
 
         const diceData = Object.values(this.#allTypes)
             .filter(typeData => typeData.enabled)
+            .sort((a, b) => b.sortPriority - a.sortPriority)
             .map(typeData => ({
                 typeData,
                 quant: userQuants[typeData.id] ?? 0
