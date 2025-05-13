@@ -47,6 +47,10 @@
                 "Label": "Maximum Amount per User",
                 "Hint": "The maximum number of dice of this type a single user can possess. (0 for unlimited)"
             },
+            "sortPriority": {
+                "Label": "Sort Priority",
+                "Hint": "Determines the order in which dice are displayed on the player list. Dice with a higher priority are displayed closer to the user names."
+            },
             "msgOnAdd": {
                 "Label": "Message on Add",
                 "Hint": "Chat message shown when a die is added to a user. If empty, no message is sent.",
