@@ -1,0 +1,92 @@
+{
+    "SHAREDDICE": {
+        "Settings": {
+            "DiceTypeConfigTitle": "共享骰子配置",
+            "ManageDiceTypes": "管理共享骰子",
+            "CreateButtonTooltip": "创建新共享骰子",
+            "DeleteButtonTooltip": "删除当前选中的骰子",
+            "EmptySelectLabel": "选择现有骰子或创建新骰子",
+            "MinRoleToEdit": {
+                "Name": "添加/删除权限",
+                "Hint": "用户需要具备的最低角色权限才能添加/删除其他用户的共享骰子"
+            },
+            "ConfigureDiceTypes": {
+                "Name": "共享骰子配置",
+                "Label": "配置共享骰子",
+                "Hint": "配置和创建本世界中可用的共享骰子"
+            },
+            "DeleteDialog": {
+                "Warning": "以下骰子将被永久删除且无法恢复：",
+                "Title": "删除共享骰子"
+            },
+            "DiceConfigHeader": "共享骰子：{dieName}",
+            "DiceConfigTitle": "骰子配置",
+            "PlaceholderInfo": {
+                "Title": "聊天消息",
+                "sourceUser": "发起用户的名称",
+                "targetUser": "目标用户的名称",
+                "dieName": "本骰子的名称",
+                "Explanation": "以下占位符会在最终聊天消息中自动替换为对应的实际值"
+            }
+        },
+        "Fields": {
+            "enabled": {
+                "Label": "启用状态",
+                "Hint": "禁用的骰子将被隐藏且不可用，但其数据会被保留，可随时重新启用"
+            },
+            "name": {
+                "Initial": "新共享骰子",
+                "Label": "骰子名称",
+                "Hint": "骰子的名称（例如'd20'、'激励骰'）。用于界面元素和聊天消息"
+            },
+            "img": {
+                "Label": "图片",
+                "Hint": "为骰子选择图片"
+            },
+            "maxPerUser": {
+                "Label": "用户持有上限",
+                "Hint": "单个用户可持有的本类型骰子最大数量（0表示无限制）"
+            },
+            "sortPriority": {
+                "Label": "排序优先级",
+                "Hint": "决定骰子在玩家列表中的显示顺序。优先级高的骰子会更靠近用户名称显示"
+            },
+            "msgOnAdd": {
+                "Label": "添加时消息",
+                "Hint": "当骰子被添加给用户时显示的聊天消息（留空则不发送消息）",
+                "Placeholder": "[$sourceUser] 给了 [$targetUser] 一枚 [$dieName]"
+            },
+            "msgOnRemove": {
+                "Label": "移除时消息",
+                "Hint": "当骰子从用户处被移除时显示的聊天消息（留空则不发送消息）",
+                "Placeholder": "[$sourceUser] 移除了 [$targetUser] 的一枚 [$dieName]"
+            },
+            "msgOnUse": {
+                "Label": "使用时消息",
+                "Hint": "当用户使用/消耗骰子时显示的聊天消息（留空则不发送消息）",
+                "Placeholder": "[$sourceUser] 使用了一枚 [$dieName]"
+            },
+            "msgOnGift": {
+                "Label": "赠送时消息",
+                "Hint": "当用户向其他用户赠送骰子时显示的聊天消息（留空则不发送消息）",
+                "Placeholder": "[$sourceUser] 向 [$targetUser] 赠送了一枚 [$dieName]"
+            }
+        },
+        "Notifications": {
+            "onNegative": "共享骰子不能为负值",
+            "onOverLimit": "用户持有的{diceTypeName}数量不能超过{diceTypeLimit}",
+            "roleCannotHave": "拥有添加/删除权限的用户自身不能持有任何共享骰子",
+            "noActiveOwner": "当前没有活跃的目标文档所有者，详情请查看控制台",
+            "noUsesRemaining": "{diceTypeName} 使用次数已耗尽"
+        },
+        "UI": {
+            "Tooltips": {
+                "edit": "{dieName} | 添加/删除",
+                "use": "{dieName} | 使用",
+                "gift": "{dieName} | 赠送",
+                "expand": "展开",
+                "collapse": "折叠"
+            }
+        }
+    }
+}
