@@ -13,6 +13,11 @@
             "lang": "en",
             "name": "English",
             "path": "lang/en.json"
+        },
+        {
+            "lang": "cn",
+            "name": "中文（简体",
+            "path": "lang/cn.json"
         }
     ],
     "esmodules": ["scripts/module.mjs"],
