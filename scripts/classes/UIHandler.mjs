@@ -1,20 +1,19 @@
 /** 
  * @import Players from "@client/applications/ui/players.mjs"; 
  * @import { User } from "@client/documents/_module.mjs";
+ * @import Collection from "@common/utils/collection.mjs";
  */
 
 import { MODULE_ID } from "../CONSTS.mjs";
+import { getAllQuants } from "./UserHandler.mjs";
+import DiceType from "./DiceType.mjs";
 import { getSetting } from "../settings.mjs";
-import { getAllQuants, hasEditRole } from "./UserHandler.mjs";
 
 export default class UIHandler {
 
-    static CONFIG = {
-        icons: {
-            "overflowHidden": "fa-solid fa-caret-down fa-rotate-270",
-            "overflowShown": "fa-solid fa-caret-down fa-rotate-90",
-        },
-        maxDiceDisplay: 3,
+    static OVERFLOW_ICONS = {
+        "hidden": "fa-solid fa-caret-down fa-rotate-270",
+        "shown": "fa-solid fa-caret-down fa-rotate-90",
     }
 
     static #instance;
@@ -33,10 +32,11 @@ export default class UIHandler {
         if (UIHandler.#instance) throw new Error("An instance of UIHandler already exists. Use UIHandler.instance instead.");
     }
 
-    #selfIsEditor = false;
+    /** @type {Collection<string, DiceType>} */
+    #enabledTypes;
 
-    /** @type {Record<string, import("./DiceType.mjs").DiceTypeData>} */
-    #allTypes;
+    /** @type {"PLAYER" | "TRUSTED" | "ASSISTANT" | "GAMEMASTER"} */
+    #selfRole;
 
     /** @type {Set<[userId: string]>} */
     #expandedOverflows = new Set();
@@ -53,11 +53,10 @@ export default class UIHandler {
      * @param {HTMLElement} html 
      * @param {object} data 
      */
-    onRenderPlayers(playersApp, html, data) {
-        this.#selfIsEditor = hasEditRole(game.user);
+    onRenderPlayers(playersApp, html, data) {        
+        this.#enabledTypes = DiceType.getCollection(type => type.enabled);
+        this.#selfRole = CONST.USER_ROLE_NAMES[game.user.role];
         
-        this.#allTypes = getSetting("diceTypes");
-
         html.querySelectorAll('li[data-user-id]')
             .forEach(li => this.#handleUserLi(li));
         
@@ -69,11 +68,137 @@ export default class UIHandler {
         const user = game.users.get(li.dataset.userId);
         
         const containerData = this.#getContainerData(user);
-        if(!containerData) return;
+        if(!containerData.length) return;
 
         const containers = this.#createUserContainers(user, containerData);
         li.appendChild(containers.main);
         if(containers.overflow) li.appendChild(containers.overflow);
+    }
+
+    /**
+     * @typedef {object} DiceActions
+     * @property {boolean} gift
+     * @property {boolean} edit
+     * @property {boolean} use
+     */
+
+    /**
+     * @typedef {object} DiceData
+     * @property {DiceActions} actions
+     * @property {number} quant 
+     * @property {DiceType} type
+     */
+
+    /** @typedef {DiceData[]} ContainerData */
+
+    /**
+     * 
+     * @param {User} user 
+     * @returns {ContainerData}
+     */
+    #getContainerData(user) {
+        const userQuants = getAllQuants(user) ?? {};
+        return this.#enabledTypes
+            .map(type => {
+                const actions = this.#getActionsForDie(type, user);
+
+                return {
+                    type,
+                    actions,
+                    clickAction: this.#getClickActionFromActions(actions),
+                    quant: userQuants[type.id] ?? 0,
+                }
+            })
+            .sort((a, b) => b.type.sortPriority - a.type.sortPriority)
+            
+    }
+
+    /**
+     * Get the actions the current user is allowed to perform on a given eleUser's die.
+     * @param {DiceType} type 
+     * @param {User} eleUser 
+     * @returns {DiceActions}
+     */
+    #getActionsForDie(type, eleUser) {
+        const use = eleUser.isSelf;
+        const gift = !use && type.allowGift;
+
+        const editPerm = type.editPermissions[this.#selfRole];
+        const edit = editPerm === DiceType.EDIT_PERMISSIONS.ALL
+            || ( editPerm === DiceType.EDIT_PERMISSIONS.SELF && eleUser.isSelf );
+
+        return { gift, use, edit, toggleOverflow: false }
+    }
+
+    #getClickActionFromActions({use, edit, gift}) {
+        const valArr = [];
+        if(use) valArr.push("use");
+        if(gift) valArr.push("gift"); // This will only be pushed if 'use' was false, due to input constraints
+        if(edit) valArr.push("edit");
+        return valArr.join("_");
+    }
+
+
+    /**
+     * 
+     * @param {User} user 
+     * @param {DiceData[]} containerData
+     * @returns {{main: HTMLDivElement, overflow: HTMLDivElement|undefined}}
+     */
+    #createUserContainers(user, containerData) {
+        const containers = {
+            main: this.#makeUserContainer(user.id, "main")
+        };
+
+        let index = 0;
+        let isOverflow = false;
+        for(const {type, quant, actions, clickAction} of containerData) {
+            if(index >= getSetting("overflowThreshold")) {
+                isOverflow = true;
+                if(!containers.overflow) containers.overflow = this.#makeUserContainer(user.id, "overflow");
+            }
+            index++;
+
+            const workingCont = isOverflow ? containers.overflow : containers.main;
+
+            const datasetData = {
+                userId: user.id,
+                diceId: type.id,
+                actions,
+            };
+
+            const options = {
+                img: type.img, 
+                spanText: `${quant}`,
+            };
+            if(clickAction) {
+                options.tooltipKey = clickAction;
+                options.tooltipArgs = { 
+                    dieName: type.name,
+                    targetUser: user.name,
+                };
+            }
+
+            const diceContDiv = this.#makeDieContainer(datasetData, options);
+            workingCont.appendChild(diceContDiv);
+        }
+        
+        if(containers.overflow) {
+            const isHidden = !this.#expandedOverflows.has(user.id);
+            if(isHidden) containers.overflow.hidden=true;
+
+            const iconClassName = UIHandler.OVERFLOW_ICONS[isHidden ? "hidden" : "shown"];
+            const overflowToggleEle = this.#makeDieContainer({
+                userId: user.id, 
+                actions: { toggleOverflow: true }
+            }, { 
+                iconClassName, 
+                tooltipKey: isHidden ? "expand" : "collapse",
+            });
+            containers.main.appendChild(overflowToggleEle);
+        }
+
+        return containers;
     }
 
     /**
@@ -85,120 +210,39 @@ export default class UIHandler {
         const div = document.createElement("div");
         div.classList.add(`${MODULE_ID}.container`, type);
         div.dataset.userId = userId;
+        div.dataset.tooltipDirection = "UP";
+        div.addEventListener("pointerup", this.#eventListener.bind(this));
+        div.addEventListener("contextmenu", this.#eventListener.bind(this), { capture: true });
         return div;
-    }
-
-    /**
-     * @typedef {object} ContainerData
-     * @property {"edit"|"use"|"gift"} action
-     * @property {{typeData: DiceTypeData, quant: number}[]} diceData
-     */
-
-    /**
-     * 
-     * @param {User} user 
-     * @returns {ContainerData}
-     */
-    #getContainerData(user) {
-        const action = this.#getActionForUser(user);
-        if(!action) return;
-
-        const userQuants = getAllQuants(user) ?? {};
-
-        const diceData = Object.values(this.#allTypes)
-            .filter(typeData => typeData.enabled)
-            .sort((a, b) => b.sortPriority - a.sortPriority)
-            .map(typeData => ({
-                typeData,
-                quant: userQuants[typeData.id] ?? 0
-            }));
-
-        return { action, diceData };
-    }
-
-    /**
-     * 
-     * @param {User} user 
-     * @param {ContainerData} containerData
-     * @returns {{main: HTMLDivElement, overflow: HTMLDivElement|undefined}}
-     */
-    #createUserContainers(user, {action, diceData}) {
-        const containers = {
-            main: this.#makeUserContainer(user.id, "main")
-        };
-
-        let index = 0;
-        let isOverflow = false;
-        for(const {typeData, quant } of diceData) {
-            if(index >= UIHandler.CONFIG.maxDiceDisplay) {
-                isOverflow = true;
-                if(!containers.overflow) containers.overflow = this.#makeUserContainer(user.id, "overflow");
-            }
-            index++;
-
-            const workingCont = isOverflow ? containers.overflow : containers.main;
-            const options = {
-                diceId: typeData.id, 
-                img: typeData.img, 
-                spanText: `${quant}`,
-                tooltipKey: action,
-                tooltipArgs: { 
-                    dieName: typeData.name,
-                    targetUser: user.name,
-                },
-                contextListener: action === "edit"
-            }
-            const diceContDiv = this.#makeDieContainer(user.id, action, options);
-            workingCont.appendChild(diceContDiv);
-        }
-        
-        if(containers.overflow) {
-            const isHidden = !this.#expandedOverflows.has(user.id);
-            if(isHidden) containers.overflow.hidden=true;
-
-            const iconClassName = UIHandler.CONFIG.icons[isHidden ? "overflowHidden" : "overflowShown"];
-            const overflowToggleEle = this.#makeDieContainer(user.id, "toggleOverflow", { 
-                iconClassName, 
-                tooltipKey: isHidden ? "expand" : "collapse",
-                contextListener: true
-            });
-            containers.main.appendChild(overflowToggleEle);
-        }
-
-        return containers;
     }
     
     /**
      * 
-     * @param {string} userId 
-     * @param {string} clickAction 
+     * @param {object} datasetData
+     * @param {string} datasetData.userId
+     * @param {Record<string, boolean>} [datasetData.actions={}]
+     * @param {string} [datasetData.diceId]
      * @param {object} [options]
-     * @param {string} [options.diceId]
      * @param {string} [options.img]
      * @param {string} [options.spanText]
      * @param {string} [options.iconClassName]
      * @param {string} [options.tooltipKey]
      * @param {object} [options.tooltipArgs]
-     * @param {boolean} [options.contextListener=false]
      * @returns {HTMLDivElement}
      */
-    #makeDieContainer(userId, clickAction, {diceId, img, spanText, iconClassName, tooltipKey, tooltipArgs, contextListener=false}={}) {
+    #makeDieContainer({userId, actions={}, diceId}, {img, spanText, iconClassName, tooltipKey, tooltipArgs}={}) {
         const diceContDiv = document.createElement("div");
         diceContDiv.className = "die-container";
-        diceContDiv.dataset.clickAction = clickAction;
-        diceContDiv.dataset.userId = userId;
+
+        const datasetData = this.#createDatasetData(userId, actions, diceId);
+        Object.entries(datasetData).forEach(([k, v]) => diceContDiv.dataset[k] = v);
 
         if(tooltipKey) {
             diceContDiv.dataset.tooltipText = tooltipArgs
                 ? game.i18n.format(`SHAREDDICE.UI.Tooltips.${tooltipKey}`, tooltipArgs)
-                : game.i18n.localize(`SHAREDDICE.UI.Tooltips.${tooltipKey}`)
+                : game.i18n.localize(`SHAREDDICE.UI.Tooltips.${tooltipKey}`);
         }
         
-        diceContDiv.addEventListener("click", this.#clickEventListener.bind(this));
-        if(contextListener) diceContDiv.addEventListener("contextmenu", this.#contextEventListener.bind(this), { capture: true });
-
-        if(diceId) diceContDiv.dataset.diceId = diceId;
-
         if(img) {
             const imgEle = document.createElement("img");
             imgEle.src = img;
@@ -221,54 +265,54 @@ export default class UIHandler {
     }
 
     /**
-     * Get the action the current user is allowed to perform on eleUser's dice.
-     * @param {User} eleUser 
-     * @returns {"edit"|"use"|"gift"|null}
+     * 
+     * @param {string} userId 
+     * @param {Record<string, boolean>} actions 
+     * @param {string} diceId 
+     * @returns {Record<string, string>}
      */
-    #getActionForUser(eleUser) {
-        if(hasEditRole(eleUser)) return null;  // Editor users should not have anything displayed
-
-        return this.#selfIsEditor 
-            ? "edit"
-            : eleUser.isSelf 
-                ? "use"
-                : "gift";
+    #createDatasetData(userId, actions={}, diceId=undefined) {
+        const data = {
+            userId: userId || "",
+            actions: {
+                toggleOverflow: actions.toggleOverflow ? "true" : "",
+                use: actions.use ? "true" : "", 
+                gift: actions.gift ? "true" : "",
+                edit: actions.edit ? "true" : "",
+            },
+            diceId: diceId || "",
+            moduleId:MODULE_ID,
+        };
+        return foundry.utils.flattenObject(data);
     }
 
     //#region Event Handling
     
     /**
      * 
-     * @param {MouseEvent} event 
+     * @param {PointerEvent} event 
      */
-    #clickEventListener(event) {
-        const {clickAction, diceId, userId} = event.currentTarget.dataset;
-        if(!clickAction) return;
-        event.preventDefault();
-        event.stopPropagation();
-        
-        switch(clickAction) {
-            case "edit": return this.#onEdit(diceId, userId);
-            case "use": return  this.#onUse(diceId);
-            case "gift": return this.#onGift(diceId, userId);
-            case "toggleOverflow": return this.#onToggleOverflow(userId);
-        }
-    }
+    #eventListener(event) {
+        if(!event.currentTarget.dataset?.userId) return;
+        if(!["pointerup", "contextmenu"].includes(event.type)) return;
+        if(event.type === "pointerup" && event.button !== 0) return;
 
-    /**
-     * 
-     * @param {MouseEvent} event 
-     */
-    #contextEventListener(event) {
-        const {clickAction, diceId, userId} = event.currentTarget.dataset;
-        if(!clickAction) return;
+        const target = event.target.closest(`div[data-module-id="${MODULE_ID}"]`);
+        if(!target) return;
+
         event.preventDefault();
         event.stopPropagation();
 
-        switch(clickAction) {
-            case "edit": return this.#onEdit(diceId, userId, true);
-            case "toggleOverflow": return this.#onToggleOverflow();
-        }
+        const {actions, userId, diceId} = foundry.utils.expandObject({...target.dataset});
+        const {toggleOverflow, edit, use, gift} = actions;
+        const isCtrl = event.ctrlKey || event.metaKey;
+        const isRight = event.type === "contextmenu";
+
+        if(toggleOverflow && !isCtrl && !isRight) return this.#onToggleOverflow(userId);  
+        if(edit && isCtrl && isRight) return this.#onEdit(diceId, userId, true);    // Remove
+        if(edit && isCtrl && !isRight) return this.#onEdit(diceId, userId, false);  // Add
+        if(use && !isCtrl && !isRight) return this.#onUse(diceId);
+        if(gift && !isCtrl && !isRight) return this.#onGift(diceId, userId);
     }
 
     #onToggleOverflow = foundry.utils.debounce((userId) => {
@@ -310,7 +354,7 @@ export default class UIHandler {
             ? this.#expandedOverflows.has(userId) 
             : ( this.#expandedOverflows.size >= (game.users.size / 2) );  // hide all if more than half are expanded
 
-        const iClassName = UIHandler.CONFIG.icons[setHidden ? "overflowHidden" : "overflowShown"];
+        const iClassName = UIHandler.OVERFLOW_ICONS[setHidden ? "hidden" : "shown"];
         const tooltipKey = setHidden ? "expand" : "collapse";
         const tooltipText = game.i18n.localize(`SHAREDDICE.UI.Tooltips.${tooltipKey}`);
         
@@ -337,8 +381,8 @@ export default class UIHandler {
      */
     #getOverflowIcons(userId=null) {
         const selector = userId 
-            ? `.die-container[data-click-action="toggleOverflow"][data-user-id="${userId}"] > i`
-            : `.die-container[data-click-action="toggleOverflow"][data-user-id] > i`;
+            ? `.die-container[data-actions\\.toggle-overflow="true"][data-user-id="${userId}"] > i`
+            : `.die-container[data-actions\\.toggle-overflow="true"][data-user-id] > i`;
         return ui.players.element.querySelectorAll(selector);
     }
 
