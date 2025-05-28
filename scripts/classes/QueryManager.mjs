@@ -38,7 +38,10 @@ export default class QueryManager {
         let res = null;
         try {
             const executingUser = this.getActiveOwner(targetUser);
-            if(!executingUser) throw new Error(`No active owner for user id '${targetUser.id}'.`);
+            if(!executingUser) {
+                notify("noActiveOwner", "error");
+                return null;
+            }
 
             queryData.userId = targetUser.id;
             res = executingUser.isSelf 
