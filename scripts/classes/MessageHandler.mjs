@@ -30,15 +30,16 @@ export default class MessageHandler {
      * @param {DiceType} diceType
      * @param {object} [config]
      * @param {User} [config.targetUser]
+     * @param {number} [config.amount]
      * @param {object} [config.messageData]
      * @returns {Promise<ChatMessage|true|null>}    Promise that resolves to the created chat message, true if the message template for the action was left blank, and null if the creation of the message has been cancelled via a hook.
      */
-    async send(action, diceType, {targetUser, messageData = {}}={}) {
+    async send(action, diceType, {targetUser, amount, messageData = {}}={}) {
         const template = this.#getMessageTemplate(action, diceType);
         if(template === "") return true; // Skip message creation if the typeMsg is falsey.
         else if(!template || typeof template !== "string") throw new Error(`Invalid actionType "${action}".`);
 
-        const templateData = this.#getTemplateData({diceType, targetUser});
+        const templateData = this.#getTemplateData({diceType, targetUser, amount});
         const content = this.#formatTemplate(template, templateData);
 
         const msgData = foundry.utils.mergeObject({
@@ -100,6 +101,7 @@ export default class MessageHandler {
             dieName: data.diceType?.name,
             sourceUser: game.user.name,
             targetUser: data.targetUser?.name,
+            amount: data.amount
         }
     }
 

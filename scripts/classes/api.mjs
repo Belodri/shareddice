@@ -12,6 +12,7 @@ import QueryManager from "./QueryManager.mjs";
  * @import Hooks from "@client/helpers/hooks.mjs";
  */
 
+
 /**
  * Register the module's API
  */
@@ -83,7 +84,7 @@ async function add(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) {
 
     if( !await QueryManager.query("_modifyQuant", targetUser, {diceId, delta: amount}) ) return false;
 
-    if(chatMessage) await MessageHandler.send("add", diceType, {targetUser})
+    if(chatMessage) await MessageHandler.send("add", diceType, {targetUser, amount})
 
     /**
      * A hook event that fires after a die is added to a target.
@@ -129,7 +130,7 @@ async function remove(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) 
 
     if( !await QueryManager.query("_modifyQuant", targetUser, {diceId, delta: -amount}) ) return false;
 
-    if(chatMessage) await MessageHandler.send("remove", diceType, {targetUser});
+    if(chatMessage) await MessageHandler.send("remove", diceType, {targetUser, amount});
 
     /**
      * A hook event that fires after a die is removed from a target.
@@ -167,7 +168,7 @@ async function use(diceId, {amount=1, chatMessage=true}={}) {
 
     if( !await QueryManager.query("_modifyQuant", game.user, {diceId, delta: -amount}) ) return false;
 
-    if(chatMessage) await MessageHandler.send("use", diceType);
+    if(chatMessage) await MessageHandler.send("use", diceType, amount);
 
     /**
      * A hook event that fires after a die is used.
@@ -219,7 +220,7 @@ async function gift(targetUserOrId, diceId, {amount=1, chatMessage=true}={}) {
         return false;
     }
 
-    if(chatMessage) await MessageHandler.send("gift", diceType, {targetUser});
+    if(chatMessage) await MessageHandler.send("gift", diceType, {targetUser, amount});
 
     /**
      * A hook event that fires after a die is gifted to a target.
