@@ -37,7 +37,11 @@ export default class QueryManager {
 
         let res = null;
         try {
-            res = targetUser.isSelf
+            const executingUser = this.getActiveOwner(targetUser);
+            if(!executingUser) throw new Error(`No active owner for user id '${targetUser.id}'.`);
+
+            queryData.userId = targetUser.id;
+            res = executingUser.isSelf 
                 ? await Promise.resolve(CONFIG.queries[queryKey](queryData))
                 : await targetUser.query(queryKey, queryData, { timeout });
         } catch(err) {
@@ -48,6 +52,16 @@ export default class QueryManager {
         return res && handleResponseObj 
             ? this._handleResponseObj(res)
             : res;
+    }
+
+    /**
+     * Gets the first active owner of a given user document.
+     * @param {User} targetUser 
+     * @returns {User|undefined}
+     */
+    static getActiveOwner(targetUser) {
+        if(targetUser.isOwner) return game.user;
+        return game.users.find(u => u.active && targetUser.testUserPermission(u, "OWNER"));
     }
 
     /**
@@ -81,11 +95,14 @@ export default class QueryManager {
  * @param {object} queryData
  * @param {string} queryData.diceId
  * @param {number} queryData.delta 
+ * @param {string} queryData.userId     No matter who executes this function, the user of this userId is the target. 
  * @returns {Promise<true|NotifParams>}
  */
-async function _modifyQuant({diceId, delta}) {
+async function _modifyQuant({diceId, delta, userId}) {
     const diceType = DiceType.getFromId(diceId);
-    const currentQuant = getQuant(game.user, diceId) ?? 0;
+    const user = game.users.get(userId);
+
+    const currentQuant = getQuant(user, diceId) ?? 0;
     const newQuant = currentQuant + delta;
 
     if(newQuant < 0) return { 
@@ -101,6 +118,6 @@ async function _modifyQuant({diceId, delta}) {
         }
     };
 
-    await game.user.setFlag(MODULE_ID, `${USER_FLAG}.${diceId}`, newQuant);
+    await user.setFlag(MODULE_ID, `${USER_FLAG}.${diceId}`, newQuant);
     return true;
 }
