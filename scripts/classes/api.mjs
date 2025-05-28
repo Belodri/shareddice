@@ -1,14 +1,14 @@
 import { MODULE_ID } from "./../CONSTS.mjs";
-import { getQuant, getUser, setQuant, hasEditRole, getAllQuants } from "./UserHandler.mjs";
+import { getQuant, getUser, canEdit, getAllQuants } from "./UserHandler.mjs";
 import { notify } from "../utils.mjs";
 import DiceType from "./DiceType.mjs";
 import MessageHandler from "./MessageHandler.mjs";
 import { getSetting } from "../settings.mjs";
+import QueryManager from "./QueryManager.mjs";
 
 
 /** 
  * @import User from "@client/documents/user.mjs"
- * @import ChatMessage from "@client/documents/chat-message.mjs";
  * @import Hooks from "@client/helpers/hooks.mjs";
  */
 
@@ -51,78 +51,70 @@ function getUserDice(targetUserOrId, diceId=null) {
     return diceId ? getQuant(targetUserOrId, diceId) : getAllQuants(targetUserOrId)
 } 
 
+
 /**
- * Add a die of a given id to a user.
- * @param {User|string} targetUserOrId 
+ * Add a die of a given id to a user and creates the chat message.
+ * @param {User|string} targetUserOrId
  * @param {string} diceId 
- * @returns {Promise<ChatMessage|true>|null} Resolves to the resulting ChatMessage, true if no message template was configured, or null on failure.
+ * @param {object} [config]
+ * @param {number} [config.amount=1]            How many die should be added? Default = 1;
+ * @param {boolean} [config.chatMessage=true]   Should the chat message be created?
+ * @returns {Promise<boolean>}
  */
-async function add(targetUserOrId, diceId) {
+async function add(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) {
     const targetUser = getUser(targetUserOrId);
-    if(hasEditRole(targetUser.id)) {
-        notify("roleCannotHave", "warn");
-        return null;
-    }
+    const diceType = DiceType.getFromId(diceId);
 
-    const /** @type {DiceType} */ diceType = DiceType.getFromId(diceId);
-    
-    const prevQuant = getQuant(targetUser, diceId) ?? 0;
-    if(prevQuant >= diceType.limit) {
-        notify("onOverLimit", "warn", { format: {diceTypeLimit: diceType.limit, diceTypeName: diceType.name} });
-        return null;
+    if(!canEdit(game.user, targetUser, diceId)) {
+        notify("missingPermissions.edit", "warn");
+        return false;
     }
-
-    const newQuant = prevQuant + 1;
 
     /**
      * A hook event that fires before a die is added to a target.
      * @function shareddice.preAdd
      * @memberof hookEvents
-     * @param {string} diceId                           Id of the die being added.
-     * @param {User} targetUser                         The user who's die is about to be added.
-     * @param {number} newQuant                         The new quantity of the die the target user would have after adding.
-     * @returns {boolean}                               Return `false` to prevent the die from being added.
+     * @param {string} diceId            Id of the die being added.
+     * @param {User} targetUser          The user who's die is about to be added.
+     * @param {number} amount            The quantity of the die about to be added.
+     * @returns {boolean}                Return `false` to prevent the die from being added.
      */
-    if(Hooks.call(`${MODULE_ID}.preAdd`, diceId, targetUser, newQuant) === false) return null;
+    if(Hooks.call(`${MODULE_ID}.preAdd`, diceId, targetUser, amount) === false) return false;
 
-    await setQuant(targetUser, diceId, newQuant);
-    const ret = await MessageHandler.send("add", diceType, {targetUser});
+    if( !await QueryManager.query("_modifyQuant", targetUser, {diceId, delta: amount}) ) return false;
+
+    if(chatMessage) await MessageHandler.send("add", diceType, {targetUser})
 
     /**
      * A hook event that fires after a die is added to a target.
      * @function shareddice.add
      * @memberof hookEvents
-     * @param {string} diceId                           Id of the die being added.
-     * @param {User} targetUser                         The user who's die was added.
-     * @param {number} newQuant                         The quantity of the die the target has.
+     * @param {string} diceId           Id of the die being added.
+     * @param {User} targetUser         The user who's die was added.
+     * @param {number} amount           The quantity of the die that was added.
      */
-    Hooks.callAll(`${MODULE_ID}.add`, diceId, targetUser, newQuant);
+    Hooks.callAll(`${MODULE_ID}.add`, diceId, targetUser, amount);
 
-    return ret;
+    return true;
 }
 
 /**
- * Remove a die of a given id to a user.
+ * Remove a die of a given id from a user and creates the chat message.
  * @param {User|string} targetUserOrId 
  * @param {string} diceId 
- * @returns {Promise<ChatMessage|true|null>} Resolves to the resulting ChatMessage, true if no message template was configured, or null on failure.
+ * @param {object} [config]
+ * @param {number} [config.amount=1]            How many die should be removed? Default = 1;
+ * @param {boolean} [config.chatMessage=true]    Should the chat message be created?
+ * @returns {Promise<boolean>} 
  */
-async function remove(targetUserOrId, diceId) {
+async function remove(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) {
     const targetUser = getUser(targetUserOrId);
-    if(hasEditRole(targetUser.id)) {
-        notify("roleCannotHave", "warn");
-        return null;
-    }
-
-    const /** @type {DiceType} */ diceType = DiceType.getFromId(diceId);
+    const diceType = DiceType.getFromId(diceId);
     
-    const prevQuant = getQuant(targetUser, diceId) ?? 0;
-    if(prevQuant <= 0) {
-        notify("onNegative", "warn");
-        return null;
+    if(!canEdit(game.user, targetUser, diceId)) {
+        notify("missingPermissions.edit", "warn");
+        return false;
     }
-
-    const newQuant = prevQuant - 1;
 
     /**
      * A hook event that fires before a die is removed from a target.
@@ -130,98 +122,82 @@ async function remove(targetUserOrId, diceId) {
      * @memberof hookEvents
      * @param {string} diceId                           Id of the die being removed.
      * @param {User} targetUser                         The user who's die is about to be removed.
-     * @param {number} newQuant                         The new quantity of the die the target user would have after removal.
+     * @param {number} amount                           The quantity of the die about to be removed.
      * @returns {boolean}                               Return `false` to prevent the die from being removed.
      */
-    if(Hooks.call(`${MODULE_ID}.preRemove`, diceId, targetUser, newQuant) === false) return null;
+    if(Hooks.call(`${MODULE_ID}.preRemove`, diceId, targetUser, amount) === false) return false;
 
-    await setQuant(targetUser, diceId, newQuant);
-    const ret = await MessageHandler.send("remove", diceType, {targetUser});
+    if( !await QueryManager.query("_modifyQuant", targetUser, {diceId, delta: -amount}) ) return false;
+
+    if(chatMessage) await MessageHandler.send("remove", diceType, {targetUser});
 
     /**
      * A hook event that fires after a die is removed from a target.
      * @function shareddice.remove
      * @memberof hookEvents
      * @param {string} diceId                           Id of the die being removed.
-     * @param {User} targetUser                         The user who's die was removed.
-     * @param {number} newQuant                         The quantity of the die the target has left.
+     * @param {User} targetUser                         The user whose die was removed.
+     * @param {number} amount                           The quantity of the die that was removed.
      */
-    Hooks.callAll(`${MODULE_ID}.remove`, diceId, targetUser, newQuant);
+    Hooks.callAll(`${MODULE_ID}.remove`, diceId, targetUser, amount);
 
-    return ret;
+    return true;
 }
-
 
 /**
  * Use a given die.
- * @param {string} diceId         
- * @returns {Promise<ChatMessage|true|null>} Resolves to the resulting ChatMessage, true if no message template was configured, or null on failure.
+ * @param {string} diceId
+ * @param {object} [config]
+ * @param {number} [config.amount=1]             How many die should be used? Default = 1;
+ * @param {boolean} [config.chatMessage=true]    Should the chat message be created?
+ * @returns {Promise<boolean>} 
  */
-async function use(diceId) {
-    const /** @type {DiceType} */ diceType = DiceType.getFromId(diceId);
-
-    const prevQuant = getQuant(game.user, diceId) ?? 0;
-    if(prevQuant <= 0) {
-        notify("noUsesRemaining", "warn", {format: {diceTypeName: diceType.name}});
-        return null;
-    }
-    const newQuant = prevQuant - 1;
+async function use(diceId, {amount=1, chatMessage=true}={}) {
+    const diceType = DiceType.getFromId(diceId);
 
     /**
      * A hook event that fires before a die is used.
      * @function shareddice.preUse
      * @memberof hookEvents
      * @param {string} diceId                           Id of the die being used.
-     * @param {number} newQuant                         The quantity of the die the user would have left after using.
+     * @param {number} amount                           The quantity of the die about to be used.
      * @returns {boolean}                               Return `false` to prevent the die from being used.
      */
-    if(Hooks.call(`${MODULE_ID}.preUse`, diceId, newQuant) === false) return null;
+    if(Hooks.call(`${MODULE_ID}.preUse`, diceId, amount) === false) return false;
 
-    await setQuant(game.user, diceId, newQuant);
-    const ret = await MessageHandler.send("use", diceType); 
+    if( !await QueryManager.query("_modifyQuant", game.user, {diceId, delta: -amount}) ) return false;
+
+    if(chatMessage) await MessageHandler.send("use", diceType);
 
     /**
      * A hook event that fires after a die is used.
      * @function shareddice.use
      * @memberof hookEvents
      * @param {string} diceId                           Id of the die being used.
-     * @param {number} newQuant                         The quantity of the die the user has left.
+     * @param {number} amount                           The quantity of the die that was used.
      */
-    Hooks.callAll(`${MODULE_ID}.use`, diceId, newQuant);
-    return ret;
+    Hooks.callAll(`${MODULE_ID}.use`, diceId, amount);
+
+    return true;
 }
 
 /**
  * Gift one use of a die to another user.
  * @param {User|string} targetUserOrId 
  * @param {string} diceId 
- * @returns {Promise<ChatMessage|true|null>} Resolves to the resulting ChatMessage, true if no message template was configured, or null on failure.
+ * @param {object} [config]
+ * @param {number} [config.amount=1]             How many die should be gifted? Default = 1;
+ * @param {boolean} [config.chatMessage=true]    Should the chat message be created?
+ * @returns {Promise<boolean>} 
  */
-async function gift(targetUserOrId, diceId) {
+async function gift(targetUserOrId, diceId, {amount=1, chatMessage=true}={}) {
     const targetUser = getUser(targetUserOrId);
+    const diceType = DiceType.getFromId(diceId);
 
-    if(hasEditRole(targetUser.id)) {
-        notify("roleCannotHave", "warn");
-        return null;
+    if(!diceType.allowGift) {
+        notify("disallowedGift", "warn");
+        return false;
     }
-
-    const /** @type {DiceType} */ diceType = DiceType.getFromId(diceId);
-
-    const selfPrevQuant = getQuant(game.user, diceId) ?? 0;
-    if(selfPrevQuant <= 0) {
-        notify("noUsesRemaining", "warn", {format: {diceTypeName: diceType.name}});
-        return null;
-    }
-
-    const targetPrevQuant = getQuant(targetUser, diceId) ?? 0;
-    if(targetPrevQuant >= diceType.limit) {
-        notify("onOverLimit", "warn", { format: {diceTypeLimit: diceType.limit, diceTypeName: diceType.name} });
-        return null;
-    }
-
-    const newSelfQuant = selfPrevQuant - 1;
-    const newTargetQuant = targetPrevQuant + 1;
-
 
     /**
      * A hook event that fires before a die is gifted to a target.
@@ -229,15 +205,21 @@ async function gift(targetUserOrId, diceId) {
      * @memberof hookEvents
      * @param {string} diceId                           Id of the die being gifted.
      * @param {User} targetUser                         The user about to receive the die.
-     * @param {number} newSelfQuant                     The quantity of the die the user would have left after gifting.
-     * @param {number} newTargetQuant                   The new quantity of the die the target user would have after gifting.
+     * @param {number} amount                           The quantity of the die about to be gifted.
      * @returns {boolean}                               Return `false` to prevent the die from being gifted.
      */
-    if(Hooks.call(`${MODULE_ID}.preGift`, diceId, targetUser, newSelfQuant, newTargetQuant ) === false) return null;
+    if(Hooks.call(`${MODULE_ID}.preGift`, diceId, targetUser, amount ) === false) return false;
 
-    await setQuant(game.user, diceId, newSelfQuant);
-    await setQuant(targetUser, diceId, newTargetQuant);
-    const ret = await MessageHandler.send("gift", diceType, {targetUser});
+    if( !await QueryManager.query("_modifyQuant", game.user, {diceId, delta: -amount}) ) return false;
+
+    const succeeded = await QueryManager.query("_modifyQuant", targetUser, {diceId, delta: amount});
+    if(!succeeded) {
+        // Rollback previous change on fail. 
+        await QueryManager.query("_modifyQuant", game.user, {diceId, delta: amount});
+        return false;
+    }
+
+    if(chatMessage) await MessageHandler.send("gift", diceType, {targetUser});
 
     /**
      * A hook event that fires after a die is gifted to a target.
@@ -245,10 +227,9 @@ async function gift(targetUserOrId, diceId) {
      * @memberof hookEvents
      * @param {string} diceId                           Id of the die being gifted.
      * @param {User} targetUser                         The user who received the die.
-     * @param {number} newSelfQuant                     The quantity of the die the user has left after gifting.
-     * @param {number} newTargetQuant                   The new quantity of the die the target user has after gifting.
+     * @param {number} amount                           The quantity of the die that was gifted.
      */
-    Hooks.callAll(`${MODULE_ID}.gift`, diceId, targetUser, newSelfQuant, newTargetQuant );
+    Hooks.callAll(`${MODULE_ID}.gift`, diceId, targetUser, amount );
 
-    return ret;
+    return true;
 }
