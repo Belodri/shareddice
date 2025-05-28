@@ -1,4 +1,7 @@
 import { getSetting, setSetting } from "../settings.mjs";
+/**
+ * @import Collection from "@common/utils/collection.mjs";
+ */
 
 /**
  * @typedef {object} MessageTemplates
@@ -9,29 +12,50 @@ import { getSetting, setSetting } from "../settings.mjs";
  */
 
 /**
+ * @typedef {object} EditPermissions
+ * @property {0|1|2} PLAYER
+ * @property {0|1|2} TRUSTED
+ * @property {0|1|2} ASSISTANT
+ */
+
+/**
  * Data model of a DiceType. 
  * @typedef {object} DiceTypeData
  * @property {string} id                        The unique identifier for this die type configuration. Cannot be changed after creation.
  * @property {boolean} enabled                  Determines if this dice type is currently active.
+ * @property {EditPermissions} editPermissions  Determines which roles (as in CONST.USER_ROLES) can add/remove this dice.
+ * @property {boolean} canAddOwn                Can a non-editor user add more of this die to themselves only?
  * @property {string} name                      The user-facing name for this die type (e.g., "Inspiration", "Hero Point"). Used in UI elements and chat messages via [$shareDieName].
  * @property {string} img                       The file path to the img representing this die type.
  * @property {number} maxPerUser                The maximum number of dice of this type a single user can possess. (0 for unlimited)
+ * @property {boolean} allowGift                Can players gift their own uses of this die to others?
  * @property {number} sortPriority              Determines the order in which dice are displayed next to the user names. Higher priority means closer to the user name.
  * @property {MessageTemplates} messages
  */
-
 
 /**
  * Data model of a DiceType. 
  */
 export default class DiceType extends foundry.abstract.DataModel {
+    static EDIT_PERMISSIONS = {
+        NONE: 0,
+        SELF: 1,
+        ALL: 2,
+    }
+
     //#region Data Model
 
     /** @override */
     static defineSchema() {
         const {
-            StringField, NumberField, BooleanField, DocumentIdField, FilePathField, SchemaField
+            StringField, NumberField, BooleanField, DocumentIdField, FilePathField, SchemaField, SetField
         } = foundry.data.fields;
+
+        const editChoices = {
+            [DiceType.EDIT_PERMISSIONS.NONE]: "SHAREDDICE.Fields.editPermissions.choices.none",
+            [DiceType.EDIT_PERMISSIONS.SELF]: "SHAREDDICE.Fields.editPermissions.choices.self",
+            [DiceType.EDIT_PERMISSIONS.ALL]: "SHAREDDICE.Fields.editPermissions.choices.all"
+        };
 
         return {
             id: new DocumentIdField({ initial: () => foundry.utils.randomID() }),
@@ -39,6 +63,32 @@ export default class DiceType extends foundry.abstract.DataModel {
                 initial: true, 
                 label: "SHAREDDICE.Fields.enabled.Label",
                 hint: "SHAREDDICE.Fields.enabled.Hint"
+            }),
+            editPermissions: new SchemaField({
+                PLAYER: new NumberField({
+                    label: "USER.RolePlayer",
+                    choices: editChoices,
+                    initial: DiceType.EDIT_PERMISSIONS.NONE,
+                    nullable: false,
+                }),
+                TRUSTED: new NumberField({
+                    label: "USER.RoleTrusted",
+                    choices: editChoices,
+                    initial: DiceType.EDIT_PERMISSIONS.NONE,
+                    nullable: false,
+                }),
+                ASSISTANT: new NumberField({
+                    label: "USER.RoleAssistant",
+                    choices: editChoices,
+                    initial: DiceType.EDIT_PERMISSIONS.NONE,
+                    nullable: false,
+                }),
+                GAMEMASTER: new NumberField({
+                    initial: DiceType.EDIT_PERMISSIONS.ALL,
+                    readonly: true,
+                    nullable: false,
+                    required: true,
+                })
             }),
             name: new StringField({
                 initial: () => game.i18n.localize("SHAREDDICE.Fields.name.Initial"),
@@ -68,6 +118,11 @@ export default class DiceType extends foundry.abstract.DataModel {
                 required: true,
                 label: "SHAREDDICE.Fields.sortPriority.Label",
                 hint: "SHAREDDICE.Fields.sortPriority.Hint",
+            }),
+            allowGift: new BooleanField({
+                label: "SHAREDDICE.Fields.allowGift.Label",
+                hint: "SHAREDDICE.Fields.allowGift.Hint",
+                initial: true,
             }),
             messages: new SchemaField({
                 add: new StringField({
@@ -155,6 +210,24 @@ export default class DiceType extends foundry.abstract.DataModel {
     }
 
     /**
+     * Gets a collection of known dice types, optionally filtered.
+     * @param {function(DiceType): *} [filterFunc]      Optional predicate function to filter dice types. 
+     *                                                  Called for each DiceType instance. Return a truthy value to 
+     *                                                  include the type in the collection, falsey to exclude it.
+     * @returns {Collection<string, DiceType>}      A collection of DiceType instances, keyed by their ID.
+     */
+    static getCollection(filterFunc) {
+        const typesCollection = new foundry.utils.Collection();
+        const setting = getSetting("diceTypes")
+        for(const data of Object.values(setting)) {
+            const type = new DiceType(data);
+            if(typeof filterFunc === "function" && !filterFunc(type)) continue;
+            typesCollection.set(type.id, type);  
+        }
+        return typesCollection;
+    }
+
+    /**
      * Get the max amount a user can have of this die.
      * If no limit, returns `Infinity`
      * @returns {number} 
@@ -163,5 +236,3 @@ export default class DiceType extends foundry.abstract.DataModel {
         return this.maxPerUser === 0 ? Infinity : this.maxPerUser;
     }
 }
-
-
