@@ -5,6 +5,7 @@ import { log } from "../utils.mjs";
  * @import User from "@client/documents/user.mjs"
  * @import ChatMessage from "@client/documents/chat-message.mjs";
  * @import Hooks from "@client/helpers/hooks.mjs";
+ * @import ChatMessageData from "@common/documents/_types.mjs";
  */
 
 export default class MessageHandler {
@@ -45,7 +46,7 @@ export default class MessageHandler {
          * @param {string} diceId                                                   The id of the dice type of the used in the action.
          * @param {User} [targetUser=undefined]                                     The target user of the action, if the action has a target. 
          * @param {number} [amount=undefined]                                       The amount the die was changed by.
-         * @param {import("@common/documents/_types.mjs").ChatMessageData} msgData  The message data used to create the message. Can be mutated.
+         * @param {ChatMessageData} msgData                                         The message data for the chat message about to be created. Can be mutated.
          * @returns {boolean}                                                       Return `false` to prevent the chat message from being created.
          */
         if(Hooks.call(`${MODULE_ID}.preCreateChatMessage`, action, diceId, targetUser, amount, msgData) === false) return null;
