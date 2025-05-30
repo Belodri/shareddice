@@ -29,7 +29,17 @@
                 "amount": "The quantity of this die.",
                 "Explanation": "The placeholders listed below are automatically swapped with their respective values in the final chat message."
             },
-            "RolePermissionsTitle": "Add/Remove Permissions"
+            "RolePermissionsTitle": "Add/Remove Permissions",
+            "LogLevel": {
+                "Name": "Log Level",
+                "Hint": "Set the console log level for this module. Higher levels show more detailed logs.",
+                "Choices": {
+                    "None": "0 - None",
+                    "Warn": "1 - Warn",
+                    "Log": "2 - Log",
+                    "Info": "3 - Info"
+                }
+            }
         },
         "Fields": {
             "enabled": {

@@ -18,6 +18,20 @@ const SETTINGS = {
         type: new foundry.data.fields.NumberField({nullable: false, min: 0, max: 10, integer: true}),
         default: 3,
         onChange: () => UIHandler.rerender(),   // Only rerenders for the client
+    },
+    logLevel: {
+        scope: "client",
+        config: true,
+        name: "SHAREDDICE.Settings.LogLevel.Name",
+        hint: "SHAREDDICE.Settings.LogLevel.Hint",
+        type: String,
+        choices: {
+            "none": "SHAREDDICE.Settings.LogLevel.Choices.None",
+            "warn": "SHAREDDICE.Settings.LogLevel.Choices.Warn",
+            "log": "SHAREDDICE.Settings.LogLevel.Choices.Log",
+            "info": "SHAREDDICE.Settings.LogLevel.Choices.Info",
+        },
+        default: "none"
     }
 }
 
