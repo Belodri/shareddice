@@ -13,7 +13,7 @@ export default class MessageHandler {
 
     /**
      * 
-     * @param {"add"|"remove"|"use"|gift} action    The type of action to perform.
+     * @param {"add"|"remove"|"use"|"gift"} action  The type of action to perform.
      * @param {DiceType} diceType                   The type of dice involved in the action.
      * @param {object} [config]                     Optional configuration for the message.
      * @param {User} [config.targetUser]            The user targeted by the action.
@@ -42,10 +42,10 @@ export default class MessageHandler {
          * A hook event that fires before a chat message is created.
          * @function shareddice.preCreateChatMessage
          * @memberof hookEvents
-         * @param {string} action                                                   The action for which the chat message is about to be created.
+         * @param {"add"|"remove"|"use"|"gift"} action                              The action for which the chat message is about to be created.
          * @param {string} diceId                                                   The id of the dice type of the used in the action.
-         * @param {User} [targetUser=undefined]                                     The target user of the action, if the action has a target. 
-         * @param {number} [amount=undefined]                                       The amount the die was changed by.
+         * @param {User|undefined} targetUser                                       The target user of the action, if the action has a target. 
+         * @param {number} amount                                                   The amount the die was changed by.
          * @param {ChatMessageData} msgData                                         The message data for the chat message about to be created. Can be mutated.
          * @returns {boolean}                                                       Return `false` to prevent the chat message from being created.
          */
@@ -57,10 +57,10 @@ export default class MessageHandler {
          * A hook event that fires after a chat message is created.
          * @function shareddice.createChatMessage
          * @memberof hookEvents
-         * @param {string} action                                                   The action for which the chat message has been created.
+         * @param {"add"|"remove"|"use"|"gift"} action                              The action for which the chat message has been created.
          * @param {string} diceId                                                   The id of the dice type of the used in the action.
-         * @param {User} [targetUser=undefined]                                     The target user of the action, if the action had a target.
-         * @param {number} [amount=undefined]                                       The amount the die was changed by.
+         * @param {User|undefined} targetUser                                       The target user of the action, if the action had a target.
+         * @param {number} amount                                                   The amount the die was changed by.
          * @param {ChatMessage} message                                             The created chat message.
          */
         Hooks.callAll(`${MODULE_ID}.createChatMessage`, action, diceId, targetUser, amount, message );
