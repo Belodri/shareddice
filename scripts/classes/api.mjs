@@ -55,12 +55,12 @@ function getUserDice(targetUserOrId, diceId=null) {
 
 /**
  * Add a die of a given id to a user and creates the chat message.
- * @param {User|string} targetUserOrId
- * @param {string} diceId 
- * @param {object} [config]
+ * @param {User|string} targetUserOrId          The user (or userId) whose die to add. 
+ * @param {string} diceId                       The id of the die to add.
+ * @param {object} [config]                     Additional configuration options.
  * @param {number} [config.amount=1]            How many die should be added? Default = 1;
- * @param {boolean} [config.chatMessage=true]   Should the chat message be created?
- * @returns {Promise<boolean>}
+ * @param {boolean} [config.chatMessage=true]   Should a chat message be created?
+ * @returns {Promise<boolean>}                  A promise that resolves to true if the action was successful, or false if not.
  */
 async function add(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) {
     const targetUser = getUser(targetUserOrId);
@@ -76,7 +76,7 @@ async function add(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) {
      * @function shareddice.preAdd
      * @memberof hookEvents
      * @param {string} diceId            Id of the die being added.
-     * @param {User} targetUser          The user who's die is about to be added.
+     * @param {User} targetUser          The user whose die is about to be added.
      * @param {number} amount            The quantity of the die about to be added.
      * @returns {boolean}                Return `false` to prevent the die from being added.
      */
@@ -91,7 +91,7 @@ async function add(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) {
      * @function shareddice.add
      * @memberof hookEvents
      * @param {string} diceId           Id of the die being added.
-     * @param {User} targetUser         The user who's die was added.
+     * @param {User} targetUser         The user whose die was added.
      * @param {number} amount           The quantity of the die that was added.
      */
     Hooks.callAll(`${MODULE_ID}.add`, diceId, targetUser, amount);
@@ -101,11 +101,11 @@ async function add(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) {
 
 /**
  * Remove a die of a given id from a user and creates the chat message.
- * @param {User|string} targetUserOrId 
- * @param {string} diceId 
- * @param {object} [config]
+ * @param {User|string} targetUserOrId          The user (or userId) whose die to remove. 
+ * @param {string} diceId                       The id of the die to remove.
+ * @param {object} [config]                     Additional configuration options.
  * @param {number} [config.amount=1]            How many die should be removed? Default = 1;
- * @param {boolean} [config.chatMessage=true]    Should the chat message be created?
+ * @param {boolean} [config.chatMessage=true]   Should a chat message be created?
  * @returns {Promise<boolean>} 
  */
 async function remove(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) {
@@ -122,7 +122,7 @@ async function remove(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) 
      * @function shareddice.preRemove
      * @memberof hookEvents
      * @param {string} diceId                           Id of the die being removed.
-     * @param {User} targetUser                         The user who's die is about to be removed.
+     * @param {User} targetUser                         The user whose die is about to be removed.
      * @param {number} amount                           The quantity of the die about to be removed.
      * @returns {boolean}                               Return `false` to prevent the die from being removed.
      */
@@ -147,10 +147,10 @@ async function remove(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) 
 
 /**
  * Use a given die.
- * @param {string} diceId
- * @param {object} [config]
- * @param {number} [config.amount=1]             How many die should be used? Default = 1;
- * @param {boolean} [config.chatMessage=true]    Should the chat message be created?
+ * @param {string} diceId                       The id of the die to use.
+ * @param {object} [config]                     Additional configuration options.
+ * @param {number} [config.amount=1]            How many die should be used? Default = 1;
+ * @param {boolean} [config.chatMessage=true]   Should the chat message be created?
  * @returns {Promise<boolean>} 
  */
 async function use(diceId, {amount=1, chatMessage=true}={}) {
@@ -184,11 +184,11 @@ async function use(diceId, {amount=1, chatMessage=true}={}) {
 
 /**
  * Gift one use of a die to another user.
- * @param {User|string} targetUserOrId 
- * @param {string} diceId 
- * @param {object} [config]
- * @param {number} [config.amount=1]             How many die should be gifted? Default = 1;
- * @param {boolean} [config.chatMessage=true]    Should the chat message be created?
+ * @param {User|string} targetUserOrId          The user (or userId) who should receive the die. 
+ * @param {string} diceId                       The id of the die to gift.
+ * @param {object} [config]                     Additional configuration options.
+ * @param {number} [config.amount=1]            How many die should be gifted? Default = 1;
+ * @param {boolean} [config.chatMessage=true]   Should the chat message be created?
  * @returns {Promise<boolean>} 
  */
 async function gift(targetUserOrId, diceId, {amount=1, chatMessage=true}={}) {
