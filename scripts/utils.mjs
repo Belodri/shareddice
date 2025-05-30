@@ -44,6 +44,11 @@ export function log(type, msg, data={}) {
     const maxVerbosity = logLevels.indexOf(logLevel);
     if(typeIndex > maxVerbosity) return;    // Also catches logLevel "none"
 
-    const clonedData = foundry.utils.deepClone(data);
-    console[type](`${MODULE_ID} | ${msg}`, clonedData);
+    const params = [`${MODULE_ID} | ${msg}`];
+    if(!foundry.utils.isEmpty(data)) {
+        const clonedData = foundry.utils.deepClone(data);
+        params.push(clonedData);
+    }
+
+    console[type](...params);
 }
