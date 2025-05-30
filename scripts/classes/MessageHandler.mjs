@@ -1,5 +1,6 @@
 import DiceType from "./DiceType.mjs";
 import { MODULE_ID } from "../CONSTS.mjs";
+import { log } from "../utils.mjs";
 /** 
  * @import User from "@client/documents/user.mjs"
  * @import ChatMessage from "@client/documents/chat-message.mjs";
@@ -16,12 +17,14 @@ export default class MessageHandler {
      * @param {object} [config]                     Optional configuration for the message.
      * @param {User} [config.targetUser]            The user targeted by the action.
      * @param {number} [config.amount]              The amount of the die involved to the action.
-     * @param {object} [config.messageData]         Additional data for message templating.
+     * @param {object} [config.messageData]         Additional data for the chat message.
      * @returns {Promise<ChatMessage|true|null>}    Promise that resolves to the created chat message,
      * true if the message template for the action was left blank,
      * and null if the creation of the message has been cancelled via a hook.
      */
     static async send(action, diceType, {targetUser, amount, messageData = {}}={}) {
+        log("debug", "Sending Chat Message", {action, diceType, config: { targetUser, amount, messageData }});
+        
         const template = this.#getMessageTemplate(action, diceType);
         if(template === "") return true; // Skip message creation if the typeMsg is falsey.
         else if(!template || typeof template !== "string") throw new Error(`Invalid actionType "${action}".`);
@@ -41,10 +44,11 @@ export default class MessageHandler {
          * @param {string} action                                                   The action for which the chat message is about to be created.
          * @param {string} diceId                                                   The id of the dice type of the used in the action.
          * @param {User} [targetUser=undefined]                                     The target user of the action, if the action has a target. 
+         * @param {number} [amount=undefined]                                       The amount the die was changed by.
          * @param {import("@common/documents/_types.mjs").ChatMessageData} msgData  The message data used to create the message. Can be mutated.
          * @returns {boolean}                                                       Return `false` to prevent the chat message from being created.
          */
-        if(Hooks.call(`${MODULE_ID}.preCreateChatMessage`, action, diceId, targetUser, msgData) === false) return null;
+        if(Hooks.call(`${MODULE_ID}.preCreateChatMessage`, action, diceId, targetUser, amount, msgData) === false) return null;
         
         const message = await ChatMessage.create(msgData);
 
@@ -54,10 +58,11 @@ export default class MessageHandler {
          * @memberof hookEvents
          * @param {string} action                                                   The action for which the chat message has been created.
          * @param {string} diceId                                                   The id of the dice type of the used in the action.
-         * @param {User} [targetUser=undefined]                                     The target user of the action, if the action had a target. 
+         * @param {User} [targetUser=undefined]                                     The target user of the action, if the action had a target.
+         * @param {number} [amount=undefined]                                       The amount the die was changed by.
          * @param {ChatMessage} message                                             The created chat message.
          */
-        Hooks.callAll(`${MODULE_ID}.createChatMessage`, action, diceId, targetUser, message );
+        Hooks.callAll(`${MODULE_ID}.createChatMessage`, action, diceId, targetUser, amount, message );
 
         return message;
     }
