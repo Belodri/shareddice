@@ -106,7 +106,7 @@ async function add(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) {
  * @param {object} [config]                     Additional configuration options.
  * @param {number} [config.amount=1]            How many die should be removed? Default = 1;
  * @param {boolean} [config.chatMessage=true]   Should a chat message be created?
- * @returns {Promise<boolean>} 
+ * @returns {Promise<boolean>}                  A promise that resolves to true if the action was successful, or false if not.
  */
 async function remove(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) {
     const targetUser = getUser(targetUserOrId);
@@ -151,7 +151,7 @@ async function remove(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) 
  * @param {object} [config]                     Additional configuration options.
  * @param {number} [config.amount=1]            How many die should be used? Default = 1;
  * @param {boolean} [config.chatMessage=true]   Should the chat message be created?
- * @returns {Promise<boolean>} 
+ * @returns {Promise<boolean>}                  A promise that resolves to true if the action was successful, or false if not.
  */
 async function use(diceId, {amount=1, chatMessage=true}={}) {
     const diceType = DiceType.getFromId(diceId);
@@ -189,7 +189,7 @@ async function use(diceId, {amount=1, chatMessage=true}={}) {
  * @param {object} [config]                     Additional configuration options.
  * @param {number} [config.amount=1]            How many die should be gifted? Default = 1;
  * @param {boolean} [config.chatMessage=true]   Should the chat message be created?
- * @returns {Promise<boolean>} 
+ * @returns {Promise<boolean>}                  A promise that resolves to true if the action was successful, or false if not.
  */
 async function gift(targetUserOrId, diceId, {amount=1, chatMessage=true}={}) {
     const targetUser = getUser(targetUserOrId);
