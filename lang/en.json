@@ -91,9 +91,9 @@
             "editPermissions": {
                 "Hint": "Do users of a given role have permission to add or remove this die?",
                 "choices": {
-                    "none": "No", 
-                    "self": "Only for themselves",
-                    "all": "For all users"
+                    "none": "None",
+                    "self": "Self Only",
+                    "all": "All Users"
                 }
             }
         },
