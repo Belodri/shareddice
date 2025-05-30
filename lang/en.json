@@ -37,7 +37,8 @@
                     "None": "0 - None",
                     "Warn": "1 - Warn",
                     "Log": "2 - Log",
-                    "Info": "3 - Info"
+                    "Info": "3 - Info",
+                    "Debug": "4 - Debug"
                 }
             }
         },

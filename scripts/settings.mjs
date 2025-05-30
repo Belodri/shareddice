@@ -30,6 +30,7 @@ const SETTINGS = {
             "warn": "SHAREDDICE.Settings.LogLevel.Choices.Warn",
             "log": "SHAREDDICE.Settings.LogLevel.Choices.Log",
             "info": "SHAREDDICE.Settings.LogLevel.Choices.Info",
+            "debug": "SHAREDDICE.Settings.LogLevel.Choices.Debug",
         },
         default: "none"
     }

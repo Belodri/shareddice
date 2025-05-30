@@ -28,14 +28,14 @@ export function notify(msg, type, options={}) {
 
 /**
  * Logs a message to the console, respecting the user's logLevel setting.
- * @param {"log"|"warn"|"info"} type 
+ * @param {"log"|"warn"|"info"|"debug"} type 
  * @param {string} msg 
- * @param {Record<string, any>} [data={}]  An object containing additional data to log. Will be deep-cloned.
+ * @param {Record<string, any>} [data={}]  An object containing additional data to log.
  * @throws {Error} If an invalid `type` is provided.
  * @returns {void}
  */
 export function log(type, msg, data={}) {
-    const logLevels = ["warn","log","info"];
+    const logLevels = ["warn","log","info", "debug"];
 
     const typeIndex = logLevels.indexOf(type);    
     if(typeIndex === -1) throw new Error(`shareddice | Invalid log type "${type}".`);
