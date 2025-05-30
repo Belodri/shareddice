@@ -1,12 +1,18 @@
-/** @import FormDataExtended from "@client/applications/ux/form-data-extended.mjs" */
 import DiceType from "../classes/DiceType.mjs";
 import { MODULE_ID } from "../CONSTS.mjs";
 import { getSetting, setSetting } from "../settings.mjs";
+import { log } from "../utils.mjs";
+
+/** 
+ * @import FormDataExtended from "@client/applications/ux/form-data-extended.mjs" 
+ * @import { DiceTypeData } from "../classes/DiceType.mjs"
+ */
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 export default class DiceTypesSettingMenu extends HandlebarsApplicationMixin(ApplicationV2) {
 
+    /** @type {Record<[diceId: string], DiceTypeData>} */
     #diceData = {};
 
     #selectedId = "";
@@ -19,6 +25,7 @@ export default class DiceTypesSettingMenu extends HandlebarsApplicationMixin(App
         this.#diceData = foundry.utils.deepClone(getSetting("diceTypes"));
     }
 
+    /** @inheritdoc */
     static DEFAULT_OPTIONS = {
         id: `${MODULE_ID}.DiceTypesConfigMenu`,
         tag: "form",
@@ -41,11 +48,13 @@ export default class DiceTypesSettingMenu extends HandlebarsApplicationMixin(App
         }
     }
 
+    /** @inheritdoc */
     static PARTS = {
         form: { template: `modules/${MODULE_ID}/templates/DiceTypesSettingMenu.hbs`, scrollable: [""] },
         footer: { template: "templates/generic/form-footer.hbs" }   
     }
 
+    /** @inheritdoc */
     async _prepareContext() {
         const selectDiceOptions = [
             { id: "", name: game.i18n.localize("SHAREDDICE.Settings.EmptySelectLabel")},
@@ -121,6 +130,7 @@ export default class DiceTypesSettingMenu extends HandlebarsApplicationMixin(App
      * @returns {Promise<void>}
      */
     static async #onSave() {
+        log("debug", "DiceTypeSetting onSave", { diceDataNew: this.#diceData });
         const settingData = getSetting("diceTypes");
 
         const deleted = [];
