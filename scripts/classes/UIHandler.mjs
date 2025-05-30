@@ -311,7 +311,8 @@ export default class UIHandler {
         const isCtrl = event.ctrlKey || event.metaKey;
         const isRight = event.type === "contextmenu";
 
-        if(toggleOverflow && !isCtrl && !isRight) return this.#onToggleOverflow(userId);  
+        if(toggleOverflow && !isRight) return this.#onToggleOverflow(userId);
+        if(toggleOverflow && isRight) return this.#onToggleOverflow();
         if(edit && isCtrl && isRight) return this.#onEdit(diceId, userId, true);    // Remove
         if(edit && isCtrl && !isRight) return this.#onEdit(diceId, userId, false);  // Add
         if(use && !isCtrl && !isRight) return this.#onUse(diceId);
