@@ -103,7 +103,8 @@
             "onOverLimit": "Users cannot have more than {diceTypeLimit} uses of {diceTypeName}.",
             "disallowedGift": "This die cannot be gifted.",
             "missingEditPermission": "You do not have the required permissions to add or remove this die.",
-            "noActiveOwner": "No owner for the target document currently active. See console for details."
+            "noActiveOwner": "No owner for the target document currently active. See console for details.",
+            "unUserDataCleanFail": "Failed to clean the flag data of {failCount} users. See console warnings for details."
         },
         "UI": {
             "Tooltips": {
