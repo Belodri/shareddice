@@ -8,6 +8,7 @@ import { MODULE_ID } from "../CONSTS.mjs";
 import { getAllQuants } from "./UserHandler.mjs";
 import DiceType from "./DiceType.mjs";
 import { getSetting } from "../settings.mjs";
+import { log } from "../utils.mjs";
 
 export default class UIHandler {
 
@@ -53,7 +54,8 @@ export default class UIHandler {
      * @param {HTMLElement} html 
      * @param {object} data 
      */
-    onRenderPlayers(playersApp, html, data) {        
+    onRenderPlayers(playersApp, html, data) {
+        log("debug", "Rendering Players");
         this.#enabledTypes = DiceType.getCollection(type => type.enabled);
         this.#selfRole = CONST.USER_ROLE_NAMES[game.user.role];
         
@@ -68,6 +70,7 @@ export default class UIHandler {
         const user = game.users.get(li.dataset.userId);
         
         const containerData = this.#getContainerData(user);
+        log("debug", "Handle User", { user, containerData });
         if(!containerData.length) return;
 
         const containers = this.#createUserContainers(user, containerData);
@@ -415,7 +418,7 @@ export default class UIHandler {
     }
 
     /**
-     * Updates the left position of all overflow elements so they 
+     * Updates the left position of all overflow elements so they're aligned vertically.
      * @param {number} left    Left position in px
      * @returns {void}
      */
