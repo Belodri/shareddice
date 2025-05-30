@@ -1,7 +1,8 @@
 import DiceType from "../classes/DiceType.mjs";
+import { cleanAllUserFlagsData } from "../classes/UserHandler.mjs";
 import { MODULE_ID } from "../CONSTS.mjs";
 import { getSetting, setSetting } from "../settings.mjs";
-import { log } from "../utils.mjs";
+import { log, notify } from "../utils.mjs";
 
 /** 
  * @import FormDataExtended from "@client/applications/ux/form-data-extended.mjs" 
@@ -138,6 +139,8 @@ export default class DiceTypesSettingMenu extends HandlebarsApplicationMixin(App
         if(deleted.length && !await this.#confirmDelete(deleted)) return;
 
         await setSetting("diceTypes", this.#diceData);
+        await cleanAllUserFlagsData(true);
+
         this.close();
     }
 
