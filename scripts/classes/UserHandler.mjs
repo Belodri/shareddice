@@ -1,4 +1,6 @@
 import { MODULE_ID, USER_FLAG } from "../CONSTS.mjs";
+import { getSetting } from "../settings.mjs";
+import { log } from "../utils.mjs";
 import DiceType from "./DiceType.mjs";
 
 /**
@@ -35,10 +37,10 @@ export function getQuant(userOrId, diceId) {
 /**
  * Gets an object of all dice and their quantities from a user's flag data.
  * @param {User|string} userOrId 
- * @returns {UserDiceData}
+ * @returns {Record<string, number>}
  */
 export function getAllQuants(userOrId) {
-    return getUser(userOrId)?.getFlag(MODULE_ID, `${USER_FLAG}`);
+    return getUser(userOrId)?.getFlag(MODULE_ID, `${USER_FLAG}`) ?? {};
 }
 
 /**
@@ -59,4 +61,48 @@ export function canEdit(sourceUserOrId, targetUserOrId, diceId) {
 
     const targetUser = getUser(targetUserOrId);
     return targetUser === sourceUser && dicePerm === DiceType.EDIT_PERMISSIONS.SELF;
+}
+
+/**
+ * Cleans invalid flag data for a given user.
+ * Deletes invalid dice ids (those not defined in settings), and updates quantities of 
+ * user dice to be between 0 and the type's limit.
+ * @param {User|string} userOrId 
+ * @returns {Promise<boolean|User>}
+ */
+export async function cleanInvalidFlagData(userOrId) {
+    const user = getUser(userOrId);
+    if(!user.testUserPermission(game.user, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER)) return false;
+
+    const allTypes = DiceType.getCollection();
+    const flagData = getAllQuants(user);
+
+    const userFlagUpdates = {};
+    for(const [diceId, quant] of Object.entries(flagData)) {
+        const type = allTypes.get(diceId);
+
+        if(!type) userFlagUpdates[`-=${diceId}`] = null;
+        else if(quant < 0 || quant > type.limit) userFlagUpdates[diceId] = Math.clamp(quant, 0, type.limit);
+    }
+
+    if(foundry.utils.isEmpty(userFlagUpdates)) {
+        log("debug", "No invalid flag data", { userId: user.id });
+        return true;
+    }
+
+    log("debug", "Cleaning invalid flag data", { userId: user.id, changes: userFlagUpdates });
+    return user.update({[`flags.${MODULE_ID}.${USER_FLAG}`]: userFlagUpdates})
+}
+
+
+/**
+ * Cleans invalid flag data for all users. GM only function.
+ * @throws {Error} If called by a non-GM user. 
+ * @returns {Promise<Array<boolean|User>>}
+ */
+export async function cleanAllUserFlagsData() {
+    if(!game.user.isGM) throw new Error(`Function 'cleanAllUserFlags' can only be executed by GM users.`);
+
+    const promises = game.users.map(u => cleanInvalidFlagData(u));
+    return Promise.all(promises);
 }
