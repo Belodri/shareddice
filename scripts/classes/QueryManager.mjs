@@ -1,5 +1,5 @@
 import DiceType from "./DiceType.mjs";
-import { notify } from "../utils.mjs";
+import { log, notify } from "../utils.mjs";
 import { MODULE_ID, USER_FLAG } from "../CONSTS.mjs";
 import { getQuant } from "./UserHandler.mjs";
 
@@ -31,6 +31,7 @@ export default class QueryManager {
      * @returns {Promise<any>}
      */
     static async query(eventName, targetUser, queryData, {timeout, handleResponseObj=true}={}) {
+        log("debug", "Query call", {eventName, targetUser, queryData, config: { timeout, handleResponseObj }});
         const queryKey = `${MODULE_ID}.${eventName}`;
 
         if(!Number.isSafeInteger(timeout) || timeout <= 0) timeout = QueryManager.TIMEOUT;
@@ -80,6 +81,7 @@ export default class QueryManager {
      * @returns {boolean} True if the response indicates success, false otherwise.
      */
     static _handleResponseObj(res) {
+        log("debug", "Handle Query Response", { res });
         if(res === true) return true;
         
         if(res?.msg &&  res?.type) {
@@ -92,6 +94,10 @@ export default class QueryManager {
         return false;
     }
 }
+
+/*----------------------------------------------------------------------------
+                Query Event Functions            
+----------------------------------------------------------------------------*/
 
 /**
  * 
