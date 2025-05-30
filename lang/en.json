@@ -6,6 +6,7 @@
             "CreateButtonTooltip": "Create a new Shared Die",
             "DeleteButtonTooltip": "Delete the currently selected Die",
             "EmptySelectLabel": "Select an existing die or create a new one",
+            "Save": "Save",
             "OverflowThreshold": {
                 "Name": "Dice Overflow Threshold",
                 "Hint": "Set the maximum number of dice icons displayed next to a player's name. Additional dice are hidden in a collapsible panel. Enter 0 to move all dice directly to the overflow panel."
@@ -16,10 +17,9 @@
                 "Hint": "Configure and create the Shared Dice available in this world."
             },
             "DeleteDialog": {
-                "Warning": "The following dice will be permanently deleted and cannot be recovered:",
+                "Warning": "Are you sure? The following dice will be permanently deleted and cannot be recovered:",
                 "Title": "Delete Shared Dice"
             },
-            "DiceConfigHeader": "Shared Die: {dieName}",
             "DiceConfigTitle": "Die Configuration",
             "PlaceholderInfo": {
                 "Title": "Chat Messages",

@@ -67,7 +67,7 @@ async function add(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) {
     const diceType = DiceType.getFromId(diceId);
 
     if(!canEdit(game.user, targetUser, diceId)) {
-        notify("missingPermissions.edit", "warn");
+        notify("missingEditPermission", "warn");
         return false;
     }
 
@@ -113,7 +113,7 @@ async function remove(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) 
     const diceType = DiceType.getFromId(diceId);
     
     if(!canEdit(game.user, targetUser, diceId)) {
-        notify("missingPermissions.edit", "warn");
+        notify("missingEditPermission", "warn");
         return false;
     }
 

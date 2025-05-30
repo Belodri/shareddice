@@ -66,7 +66,7 @@ export default class DiceTypesSettingMenu extends HandlebarsApplicationMixin(App
             die: this.#diceData[this.#selectedId] ?? {},
             fields: DiceType.schema.fields,
             buttons: [
-                { type: "save", icon: "fa-solid fa-save", label: "SETTINGS.Save", action: "save" },
+                { type: "save", icon: "fa-solid fa-save", label: "SHAREDDICE.Settings.Save", action: "save" },
             ]
         };
     }
@@ -148,7 +148,7 @@ export default class DiceTypesSettingMenu extends HandlebarsApplicationMixin(App
      */
     async #confirmDelete(deleted) {
         const delList = `<ul>${deleted.reduce((acc, curr) => acc += `<li>${curr.name}</li>`, "")}</ul>`;
-        const content = `<div><p>${game.i18n.localize("AreYouSure")} ${game.i18n.localize("SHAREDDICE.Settings.DeleteDialog.Warning")}</p>${delList}</div>`;
+        const content = `<div><p>${game.i18n.localize("SHAREDDICE.Settings.DeleteDialog.Warning")}</p>${delList}</div>`;
         return foundry.applications.api.DialogV2.confirm({
             window: {
                 title: game.i18n.localize("SHAREDDICE.Settings.DeleteDialog.Title"),
