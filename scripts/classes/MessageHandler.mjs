@@ -6,35 +6,22 @@ import { MODULE_ID } from "../CONSTS.mjs";
  * @import Hooks from "@client/helpers/hooks.mjs";
  */
 
-/**
- * Singleton class to handle the creation of Chat Messages. 
- */
 export default class MessageHandler {
-    /** @type {MessageHandler} */
-    static #instance;
-
-    static get instance() { 
-        if(!MessageHandler.#instance) MessageHandler.#instance = new MessageHandler();
-        return MessageHandler.#instance;
-    }
-
-    static async send(...args) { return MessageHandler.instance.send(...args); }
-
-    constructor() {
-        if(MessageHandler.#instance) throw new Error(`An instance of MessageHandler already exists. Use MessageHandler.instance instead.`);
-    }
+    static #templateRegex = /\[\$(.+?)\]/g;
 
     /**
      * 
-     * @param {"add"|"remove"|"use"|gift} action
-     * @param {DiceType} diceType
-     * @param {object} [config]
-     * @param {User} [config.targetUser]
-     * @param {number} [config.amount]
-     * @param {object} [config.messageData]
-     * @returns {Promise<ChatMessage|true|null>}    Promise that resolves to the created chat message, true if the message template for the action was left blank, and null if the creation of the message has been cancelled via a hook.
+     * @param {"add"|"remove"|"use"|gift} action    The type of action to perform.
+     * @param {DiceType} diceType                   The type of dice involved in the action.
+     * @param {object} [config]                     Optional configuration for the message.
+     * @param {User} [config.targetUser]            The user targeted by the action.
+     * @param {number} [config.amount]              The amount of the die involved to the action.
+     * @param {object} [config.messageData]         Additional data for message templating.
+     * @returns {Promise<ChatMessage|true|null>}    Promise that resolves to the created chat message,
+     * true if the message template for the action was left blank,
+     * and null if the creation of the message has been cancelled via a hook.
      */
-    async send(action, diceType, {targetUser, amount, messageData = {}}={}) {
+    static async send(action, diceType, {targetUser, amount, messageData = {}}={}) {
         const template = this.#getMessageTemplate(action, diceType);
         if(template === "") return true; // Skip message creation if the typeMsg is falsey.
         else if(!template || typeof template !== "string") throw new Error(`Invalid actionType "${action}".`);
@@ -75,15 +62,13 @@ export default class MessageHandler {
         return message;
     }
 
-    #templateRegex = /\[\$(.+?)\]/g;
-
     /**
-     * 
+     * Formats the template by replacing any placeholders with the respective values in the template data.
      * @param {string} msgTemplate
-     * @param {{[key: string]:string|undefined}} templateData
+     * @param {Record<string,string|number|undefined>} templateData
      * @returns {string}
      */
-    #formatTemplate(msgTemplate, templateData) {
+    static #formatTemplate(msgTemplate, templateData) {
         return msgTemplate.replaceAll(this.#templateRegex, (match, grp) => {
             const trimmed = grp.trim();
             const repVal = templateData[trimmed];
@@ -92,11 +77,11 @@ export default class MessageHandler {
     }
 
     /**
-     * 
+     * Gets the data object used to format the template.
      * @param {object} data 
-     * @returns {{[key: string]:string|undefined}}
+     * @returns {Record<string,string|number|undefined>}
      */
-    #getTemplateData(data) {
+    static #getTemplateData(data) {
         return {
             dieName: data.diceType?.name,
             sourceUser: game.user.name,
@@ -111,7 +96,8 @@ export default class MessageHandler {
      * @param {DiceType} diceType 
      * @returns {string|undefined}  Can return an empty string! Returns undefined if no template of a given action exists.
      */
-    #getMessageTemplate(action, diceType) {
+    static #getMessageTemplate(action, diceType) {
         return diceType.messages[action];
     }
 }
+
