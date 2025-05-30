@@ -1,6 +1,6 @@
 import { MODULE_ID, USER_FLAG } from "../CONSTS.mjs";
 import { getSetting } from "../settings.mjs";
-import { log } from "../utils.mjs";
+import { log, notify } from "../utils.mjs";
 import DiceType from "./DiceType.mjs";
 
 /**
@@ -67,42 +67,50 @@ export function canEdit(sourceUserOrId, targetUserOrId, diceId) {
  * Cleans invalid flag data for a given user.
  * Deletes invalid dice ids (those not defined in settings), and updates quantities of 
  * user dice to be between 0 and the type's limit.
- * @param {User|string} userOrId 
- * @returns {Promise<boolean|User>}
+ * @param {User|string} userOrId
+ * @returns {Promise<User|null>}  
  */
 export async function cleanInvalidFlagData(userOrId) {
     const user = getUser(userOrId);
-    if(!user.testUserPermission(game.user, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER)) return false;
-
     const allTypes = DiceType.getCollection();
     const flagData = getAllQuants(user);
 
-    const userFlagUpdates = {};
+    const changes = {};
     for(const [diceId, quant] of Object.entries(flagData)) {
         const type = allTypes.get(diceId);
 
-        if(!type) userFlagUpdates[`-=${diceId}`] = null;
-        else if(quant < 0 || quant > type.limit) userFlagUpdates[diceId] = Math.clamp(quant, 0, type.limit);
+        if(!type) changes[`-=${diceId}`] = null;
+        else if(quant < 0 || quant > type.limit) changes[diceId] = Math.clamp(quant, 0, type.limit);
     }
 
-    if(foundry.utils.isEmpty(userFlagUpdates)) {
+    if(foundry.utils.isEmpty(changes)) {
         log("debug", "No invalid flag data", { userId: user.id });
-        return true;
+        return user;
     }
 
-    log("debug", "Cleaning invalid flag data", { userId: user.id, changes: userFlagUpdates });
-    return user.update({[`flags.${MODULE_ID}.${USER_FLAG}`]: userFlagUpdates})
+    if(!user.testUserPermission(game.user, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER)) {
+        log("warn", "Unable to clean flag data", { userId: user.id, changes });
+        return null;
+    }
+
+    log("debug", "Cleaning invalid flag data", { userId: user.id, changes });
+    return user.update({[`flags.${MODULE_ID}.${USER_FLAG}`]: changes})
 }
 
 
 /**
- * Cleans invalid flag data for all users. GM only function.
- * @throws {Error} If called by a non-GM user. 
- * @returns {Promise<Array<boolean|User>>}
+ * Cleans invalid flag data for all users.
+ * @param {boolean} [notifyFails=false]     Should failure to clean data be shown as a notification?
+ * @returns {Promise<Array<User|null>>}     Array that contains false for each user that should have been updated but wasn't.
  */
-export async function cleanAllUserFlagsData() {
-    if(!game.user.isGM) throw new Error(`Function 'cleanAllUserFlags' can only be executed by GM users.`);
-
+export async function cleanAllUserFlagsData(notifyFails=false) {
     const promises = game.users.map(u => cleanInvalidFlagData(u));
-    return Promise.all(promises);
+    const res = await Promise.all(promises);
+
+    if(notifyFails) {
+        const unclean = res.filter(r => r === false).length;
+        if(unclean) notify("onUserDataCleanFail", "warn", { console: false, format: { failCount: unclean }});
+    }
+    
+    return res;
 }
