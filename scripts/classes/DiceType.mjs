@@ -16,15 +16,15 @@ import { getSetting, setSetting } from "../settings.mjs";
  * @property {0|1|2} PLAYER
  * @property {0|1|2} TRUSTED
  * @property {0|1|2} ASSISTANT
+ * @property {2} GAMEMASTER                     Read-only
  */
 
 /**
- * Data model of a DiceType. 
+ * Raw data of a DiceType. 
  * @typedef {object} DiceTypeData
  * @property {string} id                        The unique identifier for this die type configuration. Cannot be changed after creation.
  * @property {boolean} enabled                  Determines if this dice type is currently active.
  * @property {EditPermissions} editPermissions  Determines which roles (as in CONST.USER_ROLES) can add/remove this dice.
- * @property {boolean} canAddOwn                Can a non-editor user add more of this die to themselves only?
  * @property {string} name                      The user-facing name for this die type (e.g., "Inspiration", "Hero Point"). Used in UI elements and chat messages via [$shareDieName].
  * @property {string} img                       The file path to the img representing this die type.
  * @property {number} maxPerUser                The maximum number of dice of this type a single user can possess. (0 for unlimited)
@@ -185,7 +185,7 @@ export default class DiceType extends foundry.abstract.DataModel {
 
     /**
      * Delete this DiceType.
-     * @returns {Promise<DiceType}
+     * @returns {Promise<DiceType>}
      */
     async delete() {
         const allTypesData = getSetting("diceTypes");
@@ -199,7 +199,7 @@ export default class DiceType extends foundry.abstract.DataModel {
      * @param {string} diceId               The unique identifier for the desired dice type.
      * @param {boolean} [data=false]        If true, the data object of the DiceType is returned instead of the instance. 
      * @returns {DiceType|DiceTypeData}     The DiceType instance or it's data object.
-     * @throws {Error} If the dice diceId was not found in the settings.
+     * @throws {Error} If the diceId was not found in the settings.
      */
     static getFromId(diceId, data=false) {
         const diceTypes = getSetting("diceTypes");
