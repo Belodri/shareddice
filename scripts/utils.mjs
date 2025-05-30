@@ -1,4 +1,5 @@
-import { LOCALIZE_KEY } from "./CONSTS.mjs";
+import { LOCALIZE_KEY, MODULE_ID } from "./CONSTS.mjs";
+import { getSetting } from "./settings.mjs";
 
 /**
  * @typedef NotificationOptions
@@ -23,4 +24,26 @@ export function notify(msg, type, options={}) {
     const fullMsg = `${LOCALIZE_KEY}.Notifications.${msg}`;
     options.localize =  true;
     return ui.notifications.notify(fullMsg, type, options);
+}
+
+/**
+ * Logs a message to the console, respecting the user's logLevel setting.
+ * @param {"log"|"warn"|"info"|"debug"} type 
+ * @param {string} msg 
+ * @param {Record<string, any>} [data={}]  An object containing additional data to log.
+ * @throws {Error} If an invalid `type` is provided.
+ * @returns {void}
+ */
+export function log(type, msg, data={}) {
+    const logLevels = ["warn","log","info", "debug"];
+
+    const typeIndex = logLevels.indexOf(type);    
+    if(typeIndex === -1) throw new Error(`shareddice | Invalid log type "${type}".`);
+
+    const logLevel = getSetting("logLevel");    
+    const maxVerbosity = logLevels.indexOf(logLevel);
+    if(typeIndex > maxVerbosity) return;    // Also catches logLevel "none"
+
+    const clonedData = foundry.utils.deepClone(data);
+    console[type](`${MODULE_ID} | ${msg}`, clonedData);
 }

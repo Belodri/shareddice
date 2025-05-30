@@ -32,9 +32,12 @@
         {{ formGroup fields.name value=die.name name="name" localize=true }}
         {{ formGroup fields.img value=die.img name="img" localize=true }}
         {{ formGroup fields.maxPerUser value=die.maxPerUser name="maxPerUser" localize=true }}
+        {{ formGroup fields.allowGift value=die.allowGift name="allowGift" localize=true }}
         {{ formGroup fields.sortPriority value=die.sortPriority name="sortPriority" localize=true }}
 
     </fieldset>
+
+
     <fieldset class="dice-config">
         <legend>{{ localize "SHAREDDICE.Settings.PlaceholderInfo.Title" }}</legend>
         <div class="explanation">
@@ -44,6 +47,7 @@
                 <li>[$sourceUser] - {{ localize "SHAREDDICE.Settings.PlaceholderInfo.sourceUser"}}</li>
                 <li>[$targetUser] - {{ localize "SHAREDDICE.Settings.PlaceholderInfo.targetUser"}}</li>
                 <li>[$dieName] - {{ localize "SHAREDDICE.Settings.PlaceholderInfo.dieName"}}</li>
+                <li>[$amount] - {{ localize "SHAREDDICE.Settings.PlaceholderInfo.amount"}}</li>
             </ul>
         </div>
         
@@ -53,5 +57,16 @@
         {{ formGroup fields.messages.fields.gift value=die.messages.gift name="messages.gift" localize=true }}
 
     </fieldset>
+
+    <fieldset>
+        <legend>{{ localize "SHAREDDICE.Settings.RolePermissionsTitle" }}</legend>
+        <p class="hint">{{ localize "SHAREDDICE.Fields.editPermissions.Hint" }}</p>
+
+        {{ formGroup fields.editPermissions.fields.PLAYER value=die.editPermissions.PLAYER name="editPermissions.PLAYER" localize=true }}
+        {{ formGroup fields.editPermissions.fields.TRUSTED value=die.editPermissions.TRUSTED name="editPermissions.TRUSTED" localize=true }}
+        {{ formGroup fields.editPermissions.fields.ASSISTANT value=die.editPermissions.ASSISTANT name="editPermissions.ASSISTANT" localize=true }}
+
+    </fieldset>
+
     {{/if}}
 </section>

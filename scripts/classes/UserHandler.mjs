@@ -1,6 +1,5 @@
 import { MODULE_ID, USER_FLAG } from "../CONSTS.mjs";
-import { getSetting } from "../settings.mjs";
-import SocketManager from "./SocketManager.mjs";
+import DiceType from "./DiceType.mjs";
 
 /**
  * @import User from "@client/documents/user.mjs"
@@ -43,26 +42,21 @@ export function getAllQuants(userOrId) {
 }
 
 /**
- * Set the quantity of a specific die on a user's flag data. 
- * @param {User|string} userOrId 
- * @param {string} diceId 
- * @param {number} newQuant 
- * @returns {Promise<User|void>}    Resolves to either the updated user or void if a socket event was emitted.
- */
-export async function setQuant(userOrId, diceId, newQuant) {
-    const targetUser = getUser(userOrId);
-    const bestOwner = SocketManager.getBestOwner(targetUser);
-
-    return bestOwner.isSelf
-        ? targetUser.setFlag(MODULE_ID, `${USER_FLAG}.${diceId}`, newQuant)
-        : SocketManager.emit("setQuant", [bestOwner.id], [targetUser.id, diceId, newQuant])
-}
-
-/**
- * Does this user have the minimum role required to edit other users' dice?
- * @param {User|string} userOrId 
+ * Does the source user have the required role permissions to edit (add/remove) this die on the target user?
+ * @param {User|string} sourceUserOrId      The user attempting the action
+ * @param {User|string} targetUserOrId      The user whose dice would be affected
+ * @param {string} diceId                   The ID of the die type in question
  * @returns {boolean}
  */
-export function hasEditRole(userOrId) {
-    return getUser(userOrId)?.role >= getSetting("minRoleToEdit");
+export function canEdit(sourceUserOrId, targetUserOrId, diceId) {
+    const sourceUser = getUser(sourceUserOrId);
+    const sourceUserRoleName = CONST.USER_ROLE_NAMES[sourceUser.role];
+    const diceType = DiceType.getFromId(diceId);
+    const dicePerm = diceType.editPermissions[sourceUserRoleName];
+
+    if( dicePerm === DiceType.EDIT_PERMISSIONS.ALL ) return true;
+    if( dicePerm === DiceType.EDIT_PERMISSIONS.NONE ) return false;
+
+    const targetUser = getUser(targetUserOrId);
+    return targetUser === sourceUser && dicePerm === DiceType.EDIT_PERMISSIONS.SELF;
 }

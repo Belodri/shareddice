@@ -6,9 +6,10 @@
             "CreateButtonTooltip": "Create a new Shared Die",
             "DeleteButtonTooltip": "Delete the currently selected Die",
             "EmptySelectLabel": "Select an existing die or create a new one",
-            "MinRoleToEdit": {
-                "Name": "Add/Remove Permission",
-                "Hint": "The minimum role a user needs to add/remove the Shared Dice of other users."
+            "Save": "Save",
+            "OverflowThreshold": {
+                "Name": "Dice Overflow Threshold",
+                "Hint": "Set the maximum number of dice icons displayed next to a player's name. Additional dice are hidden in a collapsible panel. Enter 0 to move all dice directly to the overflow panel."
             },
             "ConfigureDiceTypes": {
                 "Name": "Shared Dice Configuration",
@@ -16,17 +17,29 @@
                 "Hint": "Configure and create the Shared Dice available in this world."
             },
             "DeleteDialog": {
-                "Warning": "The following dice will be permanently deleted and cannot be recovered:",
+                "Warning": "Are you sure? The following dice will be permanently deleted and cannot be recovered:",
                 "Title": "Delete Shared Dice"
             },
-            "DiceConfigHeader": "Shared Die: {dieName}",
             "DiceConfigTitle": "Die Configuration",
             "PlaceholderInfo": {
                 "Title": "Chat Messages",
                 "sourceUser": "The initiating user's name.",
                 "targetUser": "The targeted user's name.",
                 "dieName": "The name of this die.",
+                "amount": "The quantity of this die.",
                 "Explanation": "The placeholders listed below are automatically swapped with their respective values in the final chat message."
+            },
+            "RolePermissionsTitle": "Add/Remove Permissions",
+            "LogLevel": {
+                "Name": "Log Level",
+                "Hint": "Set the console log level for this module. Higher levels show more detailed logs.",
+                "Choices": {
+                    "None": "0 - None",
+                    "Warn": "1 - Warn",
+                    "Log": "2 - Log",
+                    "Info": "3 - Info",
+                    "Debug": "4 - Debug"
+                }
             }
         },
         "Fields": {
@@ -51,39 +64,54 @@
                 "Label": "Sort Priority",
                 "Hint": "Determines the order in which dice are displayed on the player list. Dice with a higher priority are displayed closer to the user names."
             },
+            "allowGift": {
+                "Label": "Allow Gift",
+                "Hint": "Can players gift their own uses of this die to others?"
+            },
             "msgOnAdd": {
                 "Label": "Message on Add",
                 "Hint": "Chat message shown when a die is added to a user. If empty, no message is sent.",
-                "Placeholder": "[$sourceUser] gave [$targetUser] one [$dieName]."
+                "Placeholder": "[$sourceUser] gave [$targetUser] [$amount] [$dieName]."
             },
             "msgOnRemove": {
                 "Label": "Message on Remove",
                 "Hint": "Chat message shown when a die is removed from a user. If empty, no message is sent.",
-                "Placeholder": "[$sourceUser] removed one [$dieName] from [$targetUser]."
+                "Placeholder": "[$sourceUser] removed [$amount] [$dieName] from [$targetUser]."
             },
             "msgOnUse": {
                 "Label": "Message on Use",
                 "Hint": "Chat message shown when a user uses/consumes a die. If empty, no message is sent.",
-                "Placeholder": "[$sourceUser] used one [$dieName]."
+                "Placeholder": "[$sourceUser] used [$amount] [$dieName]."
             },
             "msgOnGift": {
                 "Label": "Message on Gift",
                 "Hint": "Chat message shown when a user gives a die to another user. If empty, no message is sent.",
-                "Placeholder": "[$sourceUser] gifted one [$dieName] to [$targetUser]."
+                "Placeholder": "[$sourceUser] gifted [$amount] [$dieName] to [$targetUser]."
+            },
+            "editPermissions": {
+                "Hint": "Do users of a given role have permission to add or remove this die?",
+                "choices": {
+                    "none": "None",
+                    "self": "Self Only",
+                    "all": "All Users"
+                }
             }
         },
         "Notifications": {
+            "unexpectedError": "Unexpected error. Check developer console (F12) for details.",
             "onNegative": "Shared Dice can not have negative values.",
             "onOverLimit": "Users cannot have more than {diceTypeLimit} uses of {diceTypeName}.",
-            "roleCannotHave": "Users with Add/Remove permission cannot have any Shared Dice themselves.",
-            "noActiveOwner": "No owner for the target document currently active. See console for details.",
-            "noUsesRemaining": "No uses of {diceTypeName} remaining."
+            "disallowedGift": "This die cannot be gifted.",
+            "missingEditPermission": "You do not have the required permissions to add or remove this die.",
+            "noActiveOwner": "No owner for the target document currently active. See console for details."
         },
         "UI": {
             "Tooltips": {
                 "edit": "{dieName} | Add/Remove",
                 "use": "{dieName} | Use",
                 "gift": "{dieName} | Gift",
+                "use_edit": "{dieName} | Use or Add/Remove",
+                "gift_edit": "{dieName} | Gift or Add/Remove",
                 "expand": "Expand",
                 "collapse": "Collapse"
             }

@@ -10,19 +10,29 @@ const SETTINGS = {
         default: {},
         onChange: () => UIHandler.rerender(),   // Triggers on all since it's a world setting.    
     },
-    minRoleToEdit: {
-        name: "SHAREDDICE.Settings.MinRoleToEdit.Name",
-        hint: "SHAREDDICE.Settings.MinRoleToEdit.Hint",
-        scope: "world",
+    overflowThreshold: {
+        scope: "client",
         config: true,
-        type: Number,
+        name: "SHAREDDICE.Settings.OverflowThreshold.Name",
+        hint: "SHAREDDICE.Settings.OverflowThreshold.Hint",
+        type: new foundry.data.fields.NumberField({nullable: false, min: 0, max: 10, integer: true}),
+        default: 3,
+        onChange: () => UIHandler.rerender(),   // Only rerenders for the client
+    },
+    logLevel: {
+        scope: "client",
+        config: true,
+        name: "SHAREDDICE.Settings.LogLevel.Name",
+        hint: "SHAREDDICE.Settings.LogLevel.Hint",
+        type: String,
         choices: {
-            2: "USER.RoleTrusted",
-            3: "USER.RoleAssistant",
-            4: "USER.RoleGamemaster"
+            "none": "SHAREDDICE.Settings.LogLevel.Choices.None",
+            "warn": "SHAREDDICE.Settings.LogLevel.Choices.Warn",
+            "log": "SHAREDDICE.Settings.LogLevel.Choices.Log",
+            "info": "SHAREDDICE.Settings.LogLevel.Choices.Info",
+            "debug": "SHAREDDICE.Settings.LogLevel.Choices.Debug",
         },
-        default: 4,
-        onChange: () => UIHandler.rerender(),
+        default: "none"
     }
 }
 
@@ -42,7 +52,6 @@ export function registerSettings() {
         type: DiceTypesSettingMenu,                            
         restricted: true
     });
-
 }
 
 /**
