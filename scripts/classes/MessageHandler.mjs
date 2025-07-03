@@ -1,6 +1,7 @@
 import DiceType from "./DiceType.mjs";
 import { MODULE_ID } from "../CONSTS.mjs";
 import { log } from "../utils.mjs";
+import { getSetting } from "../settings.mjs";
 /** 
  * @import User from "@client/documents/user.mjs"
  * @import ChatMessage from "@client/documents/chat-message.mjs";
@@ -11,19 +12,77 @@ import { log } from "../utils.mjs";
 export default class MessageHandler {
     static #templateRegex = /\[\$(.+?)\]/g;
 
+    static #trackers = new Map();
+
     /**
+     * Sends a chat message, debouncing and accumulating identical messages that are sent in quick succession.
+     * Messages are considered identical if they share the same action, diceType, and targetUser.
+     * If a message contains custom `messageData`, it will bypass the debouncing and be sent immediately.
      * 
      * @param {"add"|"remove"|"use"|"gift"} action  The type of action to perform.
      * @param {DiceType} diceType                   The type of dice involved in the action.
      * @param {object} [config]                     Optional configuration for the message.
      * @param {User} [config.targetUser]            The user targeted by the action.
-     * @param {number} [config.amount]              The amount of the die involved to the action.
+     * @param {number} [config.amount=1]            The amount of the die involved to the action.
      * @param {object} [config.messageData]         Additional data for the chat message.
      * @returns {Promise<ChatMessage|true|null>}    Promise that resolves to the created chat message,
-     * true if the message template for the action was left blank,
-     * and null if the creation of the message has been cancelled via a hook.
+     *                                              `true` if the message template for the action was left blank,
+     *                                              or `null` if the creation of the message has been cancelled via a hook.
      */
-    static async send(action, diceType, {targetUser, amount, messageData = {}}={}) {
+    static async send(action, diceType, {targetUser, amount=1, messageData={}}={}) {
+        // Since we cannot easily hash message data and the module itself doesn't pass its own message data,
+        // we just don't debounce messages with custom message data.
+        if(!foundry.utils.isEmpty(messageData)) return this._send(action, diceType, {targetUser, amount, messageData});
+
+        const trackerId = `${action}_${diceType.id}_${targetUser?.id ?? "NONE"}`;
+
+        if(!this.#trackers.has(trackerId)) {
+            log("debug", `Creating chat message send tracker with id: ${trackerId}`);
+            this.#trackers.set(trackerId, {
+                timeoutId: null,
+                accAmount: 0,
+                resolvers: []   // Array to store {resolve, reject} pairs
+            });
+        }
+
+        const tracker = this.#trackers.get(trackerId);
+        tracker.accAmount += amount;
+        if(tracker.timeoutId) {
+            log("debug", `Resetting timeout for chat message send tracker with id: ${trackerId}`);
+            clearTimeout(tracker.timeoutId);
+        }
+
+        return new Promise((resolve, reject) => {
+            tracker.resolvers.push({resolve, reject});
+
+            tracker.timeoutId = setTimeout(async () => {
+                const { accAmount, resolvers } = this.#trackers.get(trackerId);
+                this.#trackers.delete(trackerId);
+
+                log("debug", `Executing _send of tracker id: ${trackerId}`);
+                try {
+                    const result = await this._send(action, diceType, {targetUser, amount: accAmount});
+                    resolvers.forEach(r => r.resolve(result));
+                } catch (err) {
+                    resolvers.forEach(r => r.reject(err));
+                }
+            }, getSetting("msgGroupDelaySec") * 1000);
+        });
+    }
+
+    /**
+     * Directly creates and sends a chat message for actions with configured templates.
+     * @param {"add"|"remove"|"use"|"gift"} action  The type of action to perform.
+     * @param {DiceType} diceType                   The type of dice involved in the action.
+     * @param {object} [config]                     Optional configuration for the message.
+     * @param {User} [config.targetUser]            The user targeted by the action.
+     * @param {number} [config.amount=1]            The amount of the die involved to the action.
+     * @param {object} [config.messageData]         Additional data for the chat message.
+     * @returns {Promise<ChatMessage|true|null>}    Promise that resolves to the created chat message,
+     *                                              `true` if the message template for the action was left blank,
+     *                                              or `null` if the creation of the message has been cancelled via a hook.
+     */
+    static async _send(action, diceType, {targetUser, amount=1, messageData = {}}={}) {
         log("debug", "Sending Chat Message", {action, diceType, config: { targetUser, amount, messageData }});
         
         const template = this.#getMessageTemplate(action, diceType);

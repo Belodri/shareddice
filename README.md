@@ -103,9 +103,10 @@ function findDiceTypesByName(dieName, rawData=false)
  * @param {object} [config]                     Additional configuration options.
  * @param {number} [config.amount=1]            How many die should be added? Default = 1;
  * @param {boolean} [config.chatMessage=true]   Should a chat message be created?
+ * @param {object} [config.messageData]         The data object to use when creating the message.
  * @returns {Promise<boolean>}                  A promise that resolves to true if the action was successful, or false if not.
  */
-async function add(targetUserOrId, diceId,  {amount=1, chatMessage=true}={})
+async function add(targetUserOrId, diceId,  {amount=1, chatMessage=true, messageData={}}={})
 ```
 
 ```js
@@ -116,9 +117,10 @@ async function add(targetUserOrId, diceId,  {amount=1, chatMessage=true}={})
  * @param {object} [config]                     Additional configuration options.
  * @param {number} [config.amount=1]            How many die should be removed? Default = 1;
  * @param {boolean} [config.chatMessage=true]   Should a chat message be created?
+ * @param {object} [config.messageData]         The data object to use when creating the message.
  * @returns {Promise<boolean>}                  A promise that resolves to true if the action was successful, or false if not.
  */
-async function remove(targetUserOrId, diceId,  {amount=1, chatMessage=true}={})
+async function remove(targetUserOrId, diceId,  {amount=1, chatMessage=true, messageData={}}={})
 ```
 
 ```js
@@ -128,9 +130,10 @@ async function remove(targetUserOrId, diceId,  {amount=1, chatMessage=true}={})
  * @param {object} [config]                     Additional configuration options.
  * @param {number} [config.amount=1]            How many die should be used? Default = 1;
  * @param {boolean} [config.chatMessage=true]   Should the chat message be created?
+ * @param {object} [config.messageData]         The data object to use when creating the message.
  * @returns {Promise<boolean>}                  A promise that resolves to true if the action was successful, or false if not.
  */
-async function use(diceId, {amount=1, chatMessage=true}={})
+async function use(diceId, {amount=1, chatMessage=true, messageData={}}={})
 ```
 
 ```js
@@ -141,9 +144,10 @@ async function use(diceId, {amount=1, chatMessage=true}={})
  * @param {object} [config]                     Additional configuration options.
  * @param {number} [config.amount=1]            How many die should be gifted? Default = 1;
  * @param {boolean} [config.chatMessage=true]   Should the chat message be created?
+ * @param {object} [config.messageData]         The data object to use when creating the message.
  * @returns {Promise<boolean>}                  A promise that resolves to true if the action was successful, or false if not.
  */
-async function gift(targetUserOrId, diceId, {amount=1, chatMessage=true}={})
+async function gift(targetUserOrId, diceId, {amount=1, chatMessage=true, messageData={}}={})
 ```
 
 Additionally the DiceType data model is accessible through the `DiceType` property on the API.

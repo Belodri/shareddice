@@ -40,6 +40,10 @@
                     "Info": "3 - Info",
                     "Debug": "4 - Debug"
                 }
+            },
+            "MsgGroupDelaySec": {
+                "Name": "Message Grouping Delay (s)",
+                "Hint": "Multiple identical dice actions (add/remove/gift/use) within this time frame will be grouped into a single chat message. For example, using the same die three times quickly will result in a single message showing an amount of 3, instead of three separate messages each showing an amount of 1."
             }
         },
         "Fields": {
