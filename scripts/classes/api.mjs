@@ -84,8 +84,6 @@ async function add(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) {
 
     if( !await QueryManager.query("_modifyQuant", targetUser, {diceId, delta: amount}) ) return false;
 
-    if(chatMessage) await MessageHandler.send("add", diceType, {targetUser, amount})
-
     /**
      * A hook event that fires after a die is added to a target.
      * @function shareddice.add
@@ -95,6 +93,8 @@ async function add(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) {
      * @param {number} amount           The quantity of the die that was added.
      */
     Hooks.callAll(`${MODULE_ID}.add`, diceId, targetUser, amount);
+
+    if(chatMessage) await MessageHandler.send("add", diceType, {targetUser, amount})
 
     return true;
 }
@@ -130,8 +130,6 @@ async function remove(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) 
 
     if( !await QueryManager.query("_modifyQuant", targetUser, {diceId, delta: -amount}) ) return false;
 
-    if(chatMessage) await MessageHandler.send("remove", diceType, {targetUser, amount});
-
     /**
      * A hook event that fires after a die is removed from a target.
      * @function shareddice.remove
@@ -141,6 +139,8 @@ async function remove(targetUserOrId, diceId,  {amount=1, chatMessage=true}={}) 
      * @param {number} amount                           The quantity of the die that was removed.
      */
     Hooks.callAll(`${MODULE_ID}.remove`, diceId, targetUser, amount);
+
+    if(chatMessage) await MessageHandler.send("remove", diceType, {targetUser, amount});
 
     return true;
 }
@@ -168,8 +168,6 @@ async function use(diceId, {amount=1, chatMessage=true}={}) {
 
     if( !await QueryManager.query("_modifyQuant", game.user, {diceId, delta: -amount}) ) return false;
 
-    if(chatMessage) await MessageHandler.send("use", diceType, amount);
-
     /**
      * A hook event that fires after a die is used.
      * @function shareddice.use
@@ -179,8 +177,12 @@ async function use(diceId, {amount=1, chatMessage=true}={}) {
      */
     Hooks.callAll(`${MODULE_ID}.use`, diceId, amount);
 
+    if(chatMessage) await MessageHandler.send("use", diceType, {amount});
+
     return true;
 }
+
+
 
 /**
  * Gift one use of a die to another user.
@@ -220,8 +222,6 @@ async function gift(targetUserOrId, diceId, {amount=1, chatMessage=true}={}) {
         return false;
     }
 
-    if(chatMessage) await MessageHandler.send("gift", diceType, {targetUser, amount});
-
     /**
      * A hook event that fires after a die is gifted to a target.
      * @function shareddice.gift
@@ -231,6 +231,8 @@ async function gift(targetUserOrId, diceId, {amount=1, chatMessage=true}={}) {
      * @param {number} amount                           The quantity of the die that was gifted.
      */
     Hooks.callAll(`${MODULE_ID}.gift`, diceId, targetUser, amount );
+
+    if(chatMessage) await MessageHandler.send("gift", diceType, {targetUser, amount});
 
     return true;
 }
