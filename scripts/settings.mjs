@@ -19,6 +19,14 @@ const SETTINGS = {
         default: 3,
         onChange: () => UIHandler.rerender(),   // Only rerenders for the client
     },
+    msgGroupDelaySec: {
+        scope: "world",
+        config: true,
+        name: "SHAREDDICE.Settings.MsgGroupDelaySec.Name",
+        hint: "SHAREDDICE.Settings.MsgGroupDelaySec.Hint",
+        type: new foundry.data.fields.NumberField({nullable: false, min: 0.25, max: 5, step: 0.25}),
+        default: 0.5
+    },
     logLevel: {
         scope: "client",
         config: true,
