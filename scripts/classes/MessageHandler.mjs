@@ -35,7 +35,9 @@ export default class MessageHandler {
         if(!foundry.utils.isEmpty(messageData)) return this._send(action, diceType, {targetUser, amount, messageData});
 
         const trackerId = `${action}_${diceType.id}_${targetUser?.id ?? "NONE"}`;
+
         if(!this.#trackers.has(trackerId)) {
+            log("debug", `Creating chat message send tracker with id: ${trackerId}`);
             this.#trackers.set(trackerId, {
                 timeoutId: null,
                 accAmount: 0,
@@ -45,15 +47,19 @@ export default class MessageHandler {
 
         const tracker = this.#trackers.get(trackerId);
         tracker.accAmount += amount;
-        if(tracker.timeoutId) clearTimeout(tracker.timeoutId);
+        if(tracker.timeoutId) {
+            log("debug", `Resetting timeout for chat message send tracker with id: ${trackerId}`);
+            clearTimeout(tracker.timeoutId);
+        }
 
         return new Promise((resolve, reject) => {
             tracker.resolvers.push({resolve, reject});
 
             tracker.timeoutId = setTimeout(async () => {
                 const { accAmount, resolvers } = this.#trackers.get(trackerId);
-                this.#trackers.delete(trackerId); 
+                this.#trackers.delete(trackerId);
 
+                log("debug", `Executing _send of tracker id: ${trackerId}`);
                 try {
                     const result = await this._send(action, diceType, {targetUser, amount: accAmount});
                     resolvers.forEach(r => r.resolve(result));
