@@ -183,7 +183,6 @@ async function use(diceId, {amount=1, chatMessage=true}={}) {
 }
 
 
-
 /**
  * Gift one use of a die to another user.
  * @param {User|string} targetUserOrId          The user (or userId) who should receive the die. 
