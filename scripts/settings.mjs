@@ -27,6 +27,14 @@ const SETTINGS = {
         type: new foundry.data.fields.NumberField({nullable: false, min: 0.25, max: 5, step: 0.25}),
         default: 0.5
     },
+    enableActionDialogs: {
+        scope: "client",
+        config: true,
+        name: "SHAREDDICE.Settings.EnableActionDialogs.Name",
+        hint: "SHAREDDICE.Settings.EnableActionDialogs.Hint",
+        type: Boolean,
+        default: false
+    },
     logLevel: {
         scope: "client",
         config: true,
