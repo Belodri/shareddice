@@ -5,10 +5,13 @@
  */
 
 import { MODULE_ID } from "../CONSTS.mjs";
-import { getAllQuants } from "./UserHandler.mjs";
+import { getAllQuants, getQuant } from "./UserHandler.mjs";
 import DiceType from "./DiceType.mjs";
 import { getSetting } from "../settings.mjs";
 import { log } from "../utils.mjs";
+
+const {Dialog} = foundry.applications.api;
+const {NumberField} = foundry.data.fields;
 
 export default class UIHandler {
 
@@ -103,7 +106,7 @@ export default class UIHandler {
         const userQuants = getAllQuants(user) ?? {};
         return this.#enabledTypes
             .map(type => {
-                const actions = this.#getActionsForDie(type, user);
+                const actions = this.#getActionsForDie(type, user, userQuants[type.id]);
 
                 return {
                     type,
@@ -122,9 +125,9 @@ export default class UIHandler {
      * @param {User} eleUser 
      * @returns {DiceActions}
      */
-    #getActionsForDie(type, eleUser) {
-        const use = eleUser.isSelf;
-        const gift = !use && type.allowGift;
+    #getActionsForDie(type, eleUser, userQuant=0) {
+        const use = eleUser.isSelf && userQuant > 0;
+        const gift = !use && type.allowGift && getQuant(game.user, type.id) > 0 && userQuant < type.limit;
 
         const editPerm = type.editPermissions[this.#selfRole];
         const edit = editPerm === DiceType.EDIT_PERMISSIONS.ALL
@@ -310,13 +313,28 @@ export default class UIHandler {
         const {toggleOverflow, edit, use, gift} = actions;
         const isCtrl = event.ctrlKey || event.metaKey;
         const isRight = event.type === "contextmenu";
+        const isActionDialog = getSetting("enableActionDialogs");
 
         if(toggleOverflow && !isRight) return this.#onToggleOverflow(userId);
         if(toggleOverflow && isRight) return this.#onToggleOverflow();
-        if(edit && isCtrl && isRight) return this.#onEdit(diceId, userId, true);    // Remove
-        if(edit && isCtrl && !isRight) return this.#onEdit(diceId, userId, false);  // Add
-        if(use && !isCtrl && !isRight) return this.#onUse(diceId);
-        if(gift && !isCtrl && !isRight) return this.#onGift(diceId, userId);
+
+        // Remove
+        if(edit && isCtrl && isRight) return isActionDialog 
+            ? this.#onEditDialog(diceId, userId, event) 
+            : this.#onEdit(diceId, userId, true);
+        // Add
+        if(edit && isCtrl && !isRight) return isActionDialog 
+            ? this.#onEditDialog(diceId, userId, event) 
+            : this.#onEdit(diceId, userId, false);  
+        // Use
+        if(use && !isCtrl && !isRight) return isActionDialog
+            ? this.#onUseDialog(diceId, event)
+            : this.#onUse(diceId);
+        // Gift
+        if(gift && !isCtrl && !isRight) return isActionDialog
+            ? this.#onGiftDialog(diceId, userId, event)
+            : this.#onGift(diceId, userId);
+
     }
 
     #onToggleOverflow = foundry.utils.debounce((userId) => {
@@ -345,6 +363,82 @@ export default class UIHandler {
     }, 100);
 
     //#endregion
+
+
+    //#region Action Dialogs
+
+    /**
+     * @param {string} diceId 
+     * @param {PointerEvent} event 
+     */
+    async #onUseDialog(diceId, event) {
+        const available = getQuant(game.user, diceId);
+        if(!available) return;
+
+        const type = this.#enabledTypes.get(diceId);
+        const quantGroup = new NumberField({
+            min: 1,
+            max: available,
+            integer: true,
+            label: game.i18n.localize("SHAREDDICE.UI.ActionDialogs.useAction"),
+        }).toFormGroup({},{name: "quant", value: 1}).outerHTML;
+
+        const res = await this.#inputDialog(quantGroup, `${type.name}`, event);
+        if(res?.quant) this.#api.use(diceId, { amount: res.quant});
+    }
+
+    async #onGiftDialog(diceId, targetUserId, event) {
+        const selfAvailable = getQuant(game.user, diceId);
+        if(!selfAvailable) return;
+        
+        const targetUser = game.users.get(targetUserId);
+        const targetQuant = getQuant(targetUser, diceId);
+        const type = this.#enabledTypes.get(diceId);
+        const targetAvailable = Math.max(0, type.limit - targetQuant);
+
+        const quantGroup = new NumberField({
+            min: 1,
+            max: Math.min(selfAvailable, targetAvailable),
+            integer: true,
+            label: game.i18n.localize("SHAREDDICE.UI.ActionDialogs.giftAction"),
+        }).toFormGroup({},{name: "quant", value: 1}).outerHTML;
+
+        const res = await this.#inputDialog(quantGroup, `${type.name} - ${targetUser.name}`, event);
+        if(res?.quant) this.#api.gift(targetUserId, diceId, { amount: res.quant});
+    }
+
+    async #onEditDialog(diceId, targetUserId, event) {
+        const targetUser = game.users.get(targetUserId);
+        const targetQuant = getQuant(targetUser, diceId);
+        const type = this.#enabledTypes.get(diceId);
+
+        const quantGroup = new NumberField({
+            min: -targetQuant,
+            max: type.limit - targetQuant,
+            integer: true,
+            label: game.i18n.localize("SHAREDDICE.UI.ActionDialogs.editAction"),
+        }).toFormGroup({},{name: "quant", value: 0}).outerHTML;
+
+        const res = await this.#inputDialog(quantGroup, `${type.name} - ${targetUser.name}`, event);
+        if(res?.quant > 0) this.#api.add(targetUserId, diceId, { amount: res.quant});
+        if(res?.quant < 0) this.#api.remove(targetUserId, diceId, { amount: Math.abs(res.quant)});
+    }
+
+    async #inputDialog(content, title, event) {
+        return Dialog.input({
+            window: { title },
+            position: {
+                left: event.screenX + 20,
+                top: event.screenY
+            },
+            content,
+            rejectClose: false,
+            modal: true,
+        });
+    }
+
+    //#endregion
+
 
     /**
      * Toggles the overflow of a given user or toggles the overflow of all users if omitted.
