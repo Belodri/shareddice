@@ -63,6 +63,8 @@ Additionally, if a user has add/remove permissions for a given dice type, they c
 - **Add (ctrl + click):** Adds one of that die type to the player, up to the defined limit for that die.
 - **Remove (ctrl/cmd + right-click):** Removes one of that die type from the player, down to zero.
 
+If the **Fine Dice Controls** client setting is enabled, these clicks instead open a dialog window, allowing you to use, gift, add, or remove multiple uses of a die at once.
+
 ### Overflow Toggle
 
 The maximum number of icons displayed on the player list can be configured via the settings (default 3). If additional dice types are enabled, they can be viewed by toggling the overflow button.
