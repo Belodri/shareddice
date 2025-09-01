@@ -372,69 +372,96 @@ export default class UIHandler {
      * @param {PointerEvent} event 
      */
     async #onUseDialog(diceId, event) {
-        const available = getQuant(game.user, diceId);
-        if(!available) return;
+        const selfQuant_remaining = getQuant(game.user, diceId) ?? 0;
+        if(!selfQuant_remaining) return;
 
         const type = this.#enabledTypes.get(diceId);
-        const quantGroup = new NumberField({
-            min: 1,
-            max: available,
-            integer: true,
-            label: game.i18n.localize("SHAREDDICE.UI.ActionDialogs.useAction"),
-        }).toFormGroup({},{name: "quant", value: 1}).outerHTML;
 
-        const res = await this.#inputDialog(quantGroup, `${type.name}`, event);
-        if(res?.quant) this.#api.use(diceId, { amount: res.quant});
+        const actionQuant = await this.#showQuantityDialog({
+            title: `${type.name}`,
+            label: game.i18n.localize("SHAREDDICE.UI.ActionDialogs.useAction"),
+            min: 1,
+            max: selfQuant_remaining,
+            value: 1,
+            event
+        });
+
+        if(actionQuant > 0) this.#api.use(diceId, { amount: actionQuant});
     }
 
     async #onGiftDialog(diceId, targetUserId, event) {
-        const selfAvailable = getQuant(game.user, diceId);
-        if(!selfAvailable) return;
+        const selfQuant_remaining = getQuant(game.user, diceId) ?? 0;
+        if(!selfQuant_remaining) return;
         
         const targetUser = game.users.get(targetUserId);
-        const targetQuant = getQuant(targetUser, diceId);
+        const targetQuant_remaining = getQuant(targetUser, diceId) ?? 0;
         const type = this.#enabledTypes.get(diceId);
-        const targetAvailable = Math.max(0, type.limit - targetQuant);
+        const targetQuant_diffToMax = Math.max(0, type.limit - targetQuant_remaining);
 
-        const quantGroup = new NumberField({
-            min: 1,
-            max: Math.min(selfAvailable, targetAvailable),
-            integer: true,
+        const actionQuant = await this.#showQuantityDialog({
+            title: `${type.name} - ${targetUser.name}`,
             label: game.i18n.localize("SHAREDDICE.UI.ActionDialogs.giftAction"),
-        }).toFormGroup({},{name: "quant", value: 1}).outerHTML;
+            min: 1,
+            max: Math.min(selfQuant_remaining, targetQuant_diffToMax),
+            value: 1,
+            event
+        });
 
-        const res = await this.#inputDialog(quantGroup, `${type.name} - ${targetUser.name}`, event);
-        if(res?.quant) this.#api.gift(targetUserId, diceId, { amount: res.quant});
+        if(actionQuant > 0) this.#api.gift(targetUserId, diceId, { amount: actionQuant});
     }
 
     async #onEditDialog(diceId, targetUserId, event) {
         const targetUser = game.users.get(targetUserId);
-        const targetQuant = getQuant(targetUser, diceId);
+        const targetQuant_remaining = getQuant(targetUser, diceId) ?? 0;
         const type = this.#enabledTypes.get(diceId);
 
-        const quantGroup = new NumberField({
-            min: -targetQuant,
-            max: type.limit - targetQuant,
-            integer: true,
+        const actionQuant = await this.#showQuantityDialog({
+            title: `${type.name} - ${targetUser.name}`,
             label: game.i18n.localize("SHAREDDICE.UI.ActionDialogs.editAction"),
-        }).toFormGroup({},{name: "quant", value: 0}).outerHTML;
+            min: -targetQuant_remaining,
+            max: type.limit - targetQuant_remaining,
+            value: 0,
+            event
+        });
 
-        const res = await this.#inputDialog(quantGroup, `${type.name} - ${targetUser.name}`, event);
-        if(res?.quant > 0) this.#api.add(targetUserId, diceId, { amount: res.quant});
-        if(res?.quant < 0) this.#api.remove(targetUserId, diceId, { amount: Math.abs(res.quant)});
+        // actionQuant === null falls through
+        if(actionQuant > 0) this.#api.add(targetUserId, diceId, { amount: actionQuant});
+        if(actionQuant < 0) this.#api.remove(targetUserId, diceId, { amount: Math.abs(actionQuant)});
     }
 
-    async #inputDialog(content, title, event) {
-        return Dialog.input({
+    /**
+     * Generic helper to show a quantity input dialog.
+     * @param {object} config
+     * @param {string} config.title - The title for the dialog window.
+     * @param {string} config.label - The label for the number input field.
+     * @param {number} config.min - The minimum allowed value.
+     * @param {number} config.max - The maximum allowed value.
+     * @param {number} config.value - The default value.
+     * @param {PointerEvent} config.event - The originating pointer event.
+     * @returns {Promise<number|null>} The quantity entered by the user, or null if cancelled.
+     */
+    async #showQuantityDialog({ title, label, min, max, value, event }) {
+        if (max < min) throw new Error(`UIHandler | Invalid argument: 'max' cannot be smaller than 'min'.`);
+
+        const quantGroup = new NumberField({
+            min,
+            max,
+            integer: true,
+            label,
+        }).toFormGroup({},{name: "quant", value}).outerHTML;
+
+        const res = await Dialog.input({
             window: { title },
             position: {
                 left: event.screenX + 20,
                 top: event.screenY
             },
-            content,
+            content: quantGroup,
             rejectClose: false,
             modal: true,
         });
+
+        return res?.quant ?? null;
     }
 
     //#endregion
