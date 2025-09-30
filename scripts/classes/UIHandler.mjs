@@ -171,6 +171,7 @@ export default class UIHandler {
             const converter = this.#DATASET_TYPE_CONVERTERS[type];
             if(!converter) throw new Error(`Unable to convert data -> dataset. Invalid type '${type}' for value of key '${key}'`);
 
+            // Key with module id and type to prevent potential name collisions and for type safety.
             const dataKey = [MODULE_ID, type, key].join(".");
             element.dataset[dataKey] = converter.to(value);
         }
