@@ -82,68 +82,123 @@ export default class UIHandler {
     }
 
     /**
-     * @typedef {object} DiceActions
-     * @property {boolean} gift
-     * @property {boolean} edit
-     * @property {boolean} use
+     * @typedef {"use" | "gift" | "add" | "remove" | "toggleOverflow" | "toggleOverflowAll"} ClickAction
+     */
+
+    /** 
+     * @typedef {object} ActionData
+     * @property {string} userId
+     * @property {string} [diceId]
+     * @property {Partial<{
+     *  left: ClickAction,
+     *  right: ClickAction,
+     *  leftCtrl: ClickAction,
+     *  rightCtrl: ClickAction
+     * }>} clickActions
      */
 
     /**
      * @typedef {object} DiceData
-     * @property {DiceActions} actions
+     * @property {ActionData} actionData
      * @property {number} quant 
      * @property {DiceType} type
      */
 
-    /** @typedef {DiceData[]} ContainerData */
-
     /**
      * 
      * @param {User} user 
-     * @returns {ContainerData}
+     * @returns {DiceData[]}
      */
     #getContainerData(user) {
         const userQuants = getAllQuants(user) ?? {};
         return this.#enabledTypes
             .map(type => {
-                const actions = this.#getActionsForDie(type, user, userQuants[type.id]);
-
-                return {
-                    type,
-                    actions,
-                    clickAction: this.#getClickActionFromActions(actions),
-                    quant: userQuants[type.id] ?? 0,
-                }
+                const quant = userQuants[type.id] ?? 0;
+                const actionData = this.#getActionDataForDie(type, user, quant);
+                return { type, actionData, quant }
             })
-            .sort((a, b) => b.type.sortPriority - a.type.sortPriority)
-            
+            .sort((a, b) => b.type.sortPriority - a.type.sortPriority);
     }
 
     /**
-     * Get the actions the current user is allowed to perform on a given eleUser's die.
-     * @param {DiceType} type 
+     * Get the action data for the current user for a given eleUser's die.
+     * @param {DiceType} diceType 
      * @param {User} eleUser 
-     * @returns {DiceActions}
+     * @returns {ActionData}
      */
-    #getActionsForDie(type, eleUser, userQuant=0) {
-        const use = eleUser.isSelf && userQuant > 0;
-        const gift = !use && type.allowGift && getQuant(game.user, type.id) > 0 && userQuant < type.limit;
+    #getActionDataForDie(diceType, eleUser, userQuant=0) {
+        const leftClick = eleUser.isSelf && userQuant > 0 ? "use"
+            : !eleUser.isSelf && diceType.allowGift && getQuant(game.user, diceType.id) > 0 && userQuant < diceType.limit ? "gift"
+                : undefined;
 
-        const editPerm = type.editPermissions[this.#selfRole];
-        const edit = editPerm === DiceType.EDIT_PERMISSIONS.ALL
-            || ( editPerm === DiceType.EDIT_PERMISSIONS.SELF && eleUser.isSelf );
+        const editPermission = diceType.editPermissions[this.#selfRole];
+        const canEdit = editPermission === DiceType.EDIT_PERMISSIONS.ALL
+            || ( editPermission === DiceType.EDIT_PERMISSIONS.SELF && eleUser.isSelf );
 
-        return { gift, use, edit, toggleOverflow: false }
+        const clickActions = { left: leftClick };
+        if(canEdit) {
+            clickActions.leftCtrl = "add";
+            clickActions.rightCtrl = "remove";
+        }
+
+        return {
+            userId: eleUser.id, 
+            diceId: diceType.id,
+            clickActions
+        }
     }
 
-    #getClickActionFromActions({use, edit, gift}) {
-        const valArr = [];
-        if(use) valArr.push("use");
-        if(gift) valArr.push("gift"); // This will only be pushed if 'use' was false, due to input constraints
-        if(edit) valArr.push("edit");
-        return valArr.join("_");
+    #DATASET_TYPE_CONVERTERS = {
+        "string": { to: (value) => value, from: (value) => value },
+        "number": { to: (value) => String(value), from: (value) => Number(value) },
+        "boolean": { to: (value) => String(value), from: (value) => value === "true" },
+        "null": { to: () => "null", from: () => null }
     }
 
+    /**
+     * Takes a data object with potentially nested properties and writes it to the dataset property of a HTMLElement.
+     * @param {HTMLElement} element 
+     * @param {object} data 
+     * @returns {void}
+     */
+    #writeToDataset(element, data) {
+        const flat = foundry.utils.flattenObject(data);
+
+        for(const [key, value] of Object.entries(flat)) {
+            if(value === undefined) continue;
+            const type = value === null ? "null" : typeof value;
+            
+            const converter = this.#DATASET_TYPE_CONVERTERS[type];
+            if(!converter) throw new Error(`Unable to convert data -> dataset. Invalid type '${type}' for value of key '${key}'`);
+
+            // Key with module id and type to prevent potential name collisions and for type safety.
+            const dataKey = [MODULE_ID, type, key].join(".");
+            element.dataset[dataKey] = converter.to(value);
+        }
+    }
+
+    /**
+     * Takes a HTMLElement and converts its dataset properties assigned by this module back to a type-safe data object.
+     * @param {HTMLElement} element
+     * @returns {object}
+     */
+    #readFromDataset(element) {
+        const data = {};
+        for(const dataKey in element.dataset) {
+            const valueString = element.dataset[dataKey];
+
+            const [moduleId, type, ...keySegments] = dataKey.split(".");
+            if(moduleId !== MODULE_ID) continue;
+            
+            const converter = this.#DATASET_TYPE_CONVERTERS[type];
+            if(!converter) throw new Error(`Unable to convert dataset -> data. Invalid type '${type}' for value of key '${dataKey}'`);
+
+            const key = keySegments.join(".");
+            data[key] = converter.from(valueString);
+        }
+        
+        return foundry.utils.expandObject(data);
+    }
 
     /**
      * 
@@ -152,56 +207,45 @@ export default class UIHandler {
      * @returns {{main: HTMLDivElement, overflow: HTMLDivElement|undefined}}
      */
     #createUserContainers(user, containerData) {
-        const containers = {
-            main: this.#makeUserContainer(user.id, "main")
-        };
+        const containers = { main: this.#makeUserContainer(user.id, "main") };
 
-        let index = 0;
-        let isOverflow = false;
-        for(const {type, quant, actions, clickAction} of containerData) {
-            if(index >= getSetting("overflowThreshold")) {
-                isOverflow = true;
-                if(!containers.overflow) containers.overflow = this.#makeUserContainer(user.id, "overflow");
-            }
-            index++;
-
-            const workingCont = isOverflow ? containers.overflow : containers.main;
-
-            const datasetData = {
-                userId: user.id,
-                diceId: type.id,
-                actions,
-            };
-
-            const options = {
-                img: type.img, 
-                spanText: `${quant}`,
-            };
-            if(clickAction) {
-                options.tooltipKey = clickAction;
-                options.tooltipArgs = { 
-                    dieName: type.name,
-                    targetUser: user.name,
-                };
-            }
-
-            const diceContDiv = this.#makeDieContainer(datasetData, options);
-            workingCont.appendChild(diceContDiv);
-        }
+        const overflowThreshold = getSetting("overflowThreshold") ?? 3;
         
+        for(let i = 0; i < containerData.length; i++) {
+            const container = i < overflowThreshold ? containers.main 
+                : ( containers.overflow ??= this.#makeUserContainer(user.id, "overflow") );
+
+            const {type, quant, actionData} = containerData[i];
+            const {left, leftCtrl} = actionData.clickActions;
+
+            const ttKey = [left, leftCtrl && "edit"].filter(Boolean).join("_");
+            const tooltipText = ttKey ? game.i18n.format(`SHAREDDICE.UI.Tooltips.${ttKey}`, { dieName: type.name, targetUser: user.name }) : "";
+
+            const dieContainer = this.#makeDieContainer({ img: type.img, spanText: `${quant}`, tooltipText });
+            
+            this.#writeToDataset(dieContainer, actionData);
+
+            container.appendChild(dieContainer);
+        }
+
         if(containers.overflow) {
             const isHidden = !this.#expandedOverflows.has(user.id);
             if(isHidden) containers.overflow.hidden=true;
 
-            const iconClassName = UIHandler.OVERFLOW_ICONS[isHidden ? "hidden" : "shown"];
-            const overflowToggleEle = this.#makeDieContainer({
-                userId: user.id, 
-                actions: { toggleOverflow: true }
-            }, { 
-                iconClassName, 
-                tooltipKey: isHidden ? "expand" : "collapse",
+            const overflowContainer = this.#makeDieContainer({ 
+                iconClassName: UIHandler.OVERFLOW_ICONS[isHidden ? "hidden" : "shown"], 
+                tooltipText: game.i18n.localize(`SHAREDDICE.UI.Tooltips.${isHidden ? "expand" : "collapse"}`)
             });
-            containers.main.appendChild(overflowToggleEle);
+
+            const actionData = {
+                userId: user.id,
+                clickActions: { left: "toggleOverflow", right: "toggleOverflowAll" }
+            }
+
+            this.#writeToDataset(overflowContainer, actionData);
+            overflowContainer.dataset.toggleOverflow = "true";  // Simple flag for toggleAll selector
+
+            containers.main.appendChild(overflowContainer);
         }
 
         return containers;
@@ -223,74 +267,42 @@ export default class UIHandler {
     }
     
     /**
-     * 
-     * @param {object} datasetData
-     * @param {string} datasetData.userId
-     * @param {Record<string, boolean>} [datasetData.actions={}]
-     * @param {string} [datasetData.diceId]
-     * @param {object} [options]
-     * @param {string} [options.img]
-     * @param {string} [options.spanText]
-     * @param {string} [options.iconClassName]
-     * @param {string} [options.tooltipKey]
-     * @param {object} [options.tooltipArgs]
+     * @param {Partial<{
+     *  img: string,
+     *  spanText: string,
+     *  tooltipText: string,
+     *  iconClassName: string
+     * }>} data 
      * @returns {HTMLDivElement}
      */
-    #makeDieContainer({userId, actions={}, diceId}, {img, spanText, iconClassName, tooltipKey, tooltipArgs}={}) {
-        const diceContDiv = document.createElement("div");
-        diceContDiv.className = "die-container";
+    #makeDieContainer({img, spanText, tooltipText, iconClassName }={}) {
+        const div = document.createElement("div");
+        div.className = "die-container";
+        div.dataset.moduleId = MODULE_ID;
 
-        const datasetData = this.#createDatasetData(userId, actions, diceId);
-        Object.entries(datasetData).forEach(([k, v]) => diceContDiv.dataset[k] = v);
+        if(tooltipText) div.dataset.tooltip = tooltipText;
 
-        if(tooltipKey) {
-            diceContDiv.dataset.tooltipText = tooltipArgs
-                ? game.i18n.format(`SHAREDDICE.UI.Tooltips.${tooltipKey}`, tooltipArgs)
-                : game.i18n.localize(`SHAREDDICE.UI.Tooltips.${tooltipKey}`);
-        }
-        
         if(img) {
             const imgEle = document.createElement("img");
             imgEle.src = img;
-            diceContDiv.appendChild(imgEle);
+            div.appendChild(imgEle);
         }
 
         if(spanText) {
             const spanEle = document.createElement("span");
             spanEle.textContent = spanText;
-            diceContDiv.appendChild(spanEle);
+            div.appendChild(spanEle);
         }
 
         if(iconClassName) {
             const iconEle = document.createElement("i");
             iconEle.className = iconClassName;
-            diceContDiv.appendChild(iconEle);
+            div.appendChild(iconEle);
         }
 
-        return diceContDiv;
+        return div;
     }
 
-    /**
-     * 
-     * @param {string} userId 
-     * @param {Record<string, boolean>} actions 
-     * @param {string} diceId 
-     * @returns {Record<string, string>}
-     */
-    #createDatasetData(userId, actions={}, diceId=undefined) {
-        const data = {
-            userId: userId || "",
-            actions: {
-                toggleOverflow: actions.toggleOverflow ? "true" : "",
-                use: actions.use ? "true" : "", 
-                gift: actions.gift ? "true" : "",
-                edit: actions.edit ? "true" : "",
-            },
-            diceId: diceId || "",
-            moduleId:MODULE_ID,
-        };
-        return foundry.utils.flattenObject(data);
-    }
 
     //#region Event Handling
     
@@ -309,33 +321,54 @@ export default class UIHandler {
         event.preventDefault();
         event.stopPropagation();
 
-        const {actions, userId, diceId} = foundry.utils.expandObject({...target.dataset});
-        const {toggleOverflow, edit, use, gift} = actions;
         const isCtrl = event.ctrlKey || event.metaKey;
         const isRight = event.type === "contextmenu";
         const isActionDialog = getSetting("enableActionDialogs");
 
-        if(toggleOverflow && !isRight) return this.#onToggleOverflow(userId);
-        if(toggleOverflow && isRight) return this.#onToggleOverflow();
+        /** @type {ActionData} */
+        const actionData =  this.#readFromDataset(target);
+        const { userId, diceId, clickActions } = actionData;
+        const { left, right, leftCtrl, rightCtrl } = clickActions;
+        // If userId exists after being read from the dataset, we know the data is from this module.
+        // Should any other property be undefined when needed, an error will be thrown and caught by the individual action functions.
+        if(!userId) return;
 
-        // Remove
-        if(edit && isCtrl && isRight) return isActionDialog 
-            ? this.#onEditDialog(diceId, userId, event) 
-            : this.#onEdit(diceId, userId, true);
-        // Add
-        if(edit && isCtrl && !isRight) return isActionDialog 
-            ? this.#onEditDialog(diceId, userId, event) 
-            : this.#onEdit(diceId, userId, false);  
-        // Use
-        if(use && !isCtrl && !isRight) return isActionDialog
-            ? this.#onUseDialog(diceId, event)
-            : this.#onUse(diceId);
-        // Gift
-        if(gift && !isCtrl && !isRight) return isActionDialog
-            ? this.#onGiftDialog(diceId, userId, event)
-            : this.#onGift(diceId, userId);
+        const clickType = isCtrl
+            ? isRight ? "rightCtrl" : "leftCtrl"
+            : isRight ? "right" : "left";
 
+        const clickAction = clickActions[clickType];
+
+        switch(clickAction) {
+            case "toggleOverflow": return this.#onToggleOverflow(userId);
+            case "toggleOverflowAll": return this.#onToggleOverflow();
+            case "use": return isActionDialog ? this.#onUseDialog(diceId, event) : this.#onUse(diceId);
+            case "gift": return isActionDialog ? this.#onGiftDialog(diceId, userId, event) : this.#onGift(diceId, userId);
+            case "add": return isActionDialog ? this.#onEditDialog(diceId, userId, event) : this.#onEdit(diceId, userId, false);
+            case "remove": return isActionDialog ? this.#onEditDialog(diceId, userId, event) : this.#onEdit(diceId, userId, true);
+            default: break;
+        }
+
+        // Press ctrl for edit 
+        const ctrlAvailble = diceId && !isCtrl && (leftCtrl || rightCtrl);
+        if(ctrlAvailble) return foundry.ui.notifications.warn(`SHAREDDICE.Notifications.InvalidClickAction.HoldCtrlForEdit`, {localize: true});
+
+        // Release ctrl for use
+        const useAvailable = diceId && left === "use" && isCtrl;
+        if(useAvailable) return foundry.ui.notifications.warn(`SHAREDDICE.Notifications.InvalidClickAction.ReleaseCtrlForUse`, {localize: true});
+
+        // Release ctrl for gift
+        const giftAvailable = diceId && left === "gift" && isCtrl;
+        if(giftAvailable) return foundry.ui.notifications.warn(`SHAREDDICE.Notifications.InvalidClickAction.ReleaseCtrlForGift`, {localize: true});
+
+        // no actions available
+        const noActionAvailable = diceId && !left && !right && !leftCtrl && !rightCtrl;
+        if(noActionAvailable) return foundry.ui.notifications.warn(`SHAREDDICE.Notifications.InvalidClickAction.NoAvailableAction`, {localize: true});
+
+        // default
+        return foundry.ui.notifications.warn(`SHAREDDICE.Notifications.InvalidClickAction.Default`, {localize: true});
     }
+
 
     #onToggleOverflow = foundry.utils.debounce((userId) => {
         try {
@@ -506,8 +539,8 @@ export default class UIHandler {
      */
     #getOverflowIcons(userId=null) {
         const selector = userId 
-            ? `.die-container[data-actions\\.toggle-overflow="true"][data-user-id="${userId}"] > i`
-            : `.die-container[data-actions\\.toggle-overflow="true"][data-user-id] > i`;
+            ? `.die-container[data-toggle-overflow="true"][data-${MODULE_ID}\\.string\\.user-id="${userId}"] > i`
+            : `.die-container[data-toggle-overflow="true"] > i`;
         return ui.players.element.querySelectorAll(selector);
     }
 
@@ -519,7 +552,7 @@ export default class UIHandler {
     #getOverflowDivs(userId=null) {
         const selector = userId 
             ? `.shareddice\\.container.overflow[data-user-id="${userId}"]`
-            : ".shareddice\\.container.overflow[data-user-id]";
+            : `.shareddice\\.container.overflow`;
         return ui.players.element.querySelectorAll(selector);
     }
 
