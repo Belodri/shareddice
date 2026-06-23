@@ -68,6 +68,10 @@
                 "Label": "Maximum Amount per User",
                 "Hint": "The maximum number of dice of this type a single user can possess. (0 for unlimited)"
             },
+            "maxPerGM": {
+                "Label": "Maximum Amount per GM",
+                "Hint": "The maximum number of dice of this type a GM can possess. Overrides the per-user limit for GMs. (0 for unlimited)"
+            },
             "sortPriority": {
                 "Label": "Sort Priority",
                 "Hint": "Determines the order in which dice are displayed on the player list. Dice with a higher priority are displayed closer to the user names."

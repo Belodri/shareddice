@@ -112,6 +112,15 @@ export default class DiceType extends foundry.abstract.DataModel {
                 label: "SHAREDDICE.Fields.maxPerUser.Label",
                 hint: "SHAREDDICE.Fields.maxPerUser.Hint",
             }),
+            maxPerGM: new NumberField({
+                min: 0,
+                integer: true,
+                nullable: false,
+                required: true,
+                initial: 0,
+                label: "SHAREDDICE.Fields.maxPerGM.Label",
+                hint: "SHAREDDICE.Fields.maxPerGM.Hint",
+            }),
             sortPriority: new NumberField({
                 nullable: false,
                 initial: 0,
@@ -228,11 +237,29 @@ export default class DiceType extends foundry.abstract.DataModel {
     }
 
     /**
-     * Get the max amount a user can have of this die.
+     * Get the max amount a player can have of this die.
      * If no limit, returns `Infinity`
-     * @returns {number} 
+     * @returns {number}
      */
     get limit() {
         return this.maxPerUser === 0 ? Infinity : this.maxPerUser;
+    }
+
+    /**
+     * Get the max amount a GM can have of this die.
+     * If no limit, returns `Infinity`
+     * @returns {number}
+     */
+    get gmLimit() {
+        return this.maxPerGM === 0 ? Infinity : this.maxPerGM;
+    }
+
+    /**
+     * Get the effective limit for a given user — GMs use `gmLimit`, everyone else uses `limit`.
+     * @param {User} user
+     * @returns {number}
+     */
+    limitFor(user) {
+        return user.isGM ? this.gmLimit : this.limit;
     }
 }

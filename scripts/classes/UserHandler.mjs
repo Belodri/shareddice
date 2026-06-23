@@ -80,7 +80,10 @@ export async function cleanInvalidFlagData(userOrId) {
         const type = allTypes.get(diceId);
 
         if(!type) changes[`-=${diceId}`] = null;
-        else if(quant < 0 || quant > type.limit) changes[diceId] = Math.clamp(quant, 0, type.limit);
+        else {
+            const effectiveLimit = type.limitFor(user);
+            if(quant < 0 || quant > effectiveLimit) changes[diceId] = Math.clamp(quant, 0, effectiveLimit);
+        }
     }
 
     if(foundry.utils.isEmpty(changes)) {

@@ -113,17 +113,18 @@ async function _modifyQuant({diceId, delta, userId}) {
 
     const currentQuant = getQuant(user, diceId) ?? 0;
     const newQuant = currentQuant + delta;
+    const effectiveLimit = diceType.limitFor(user);
 
-    if(newQuant < 0) return { 
+    if(newQuant < 0) return {
         msg: "onNegative",
         type: "warn"
     };
 
-    if(newQuant > diceType.limit) return {
+    if(newQuant > effectiveLimit) return {
         msg: "onOverLimit",
         type: "warn",
         options: {
-            format: { diceTypeLimit: diceType.limit, diceTypeName: diceType.name }
+            format: { diceTypeLimit: effectiveLimit, diceTypeName: diceType.name }
         }
     };
 
