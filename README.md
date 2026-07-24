@@ -293,6 +293,21 @@ Hooks.call("shareddice.preCreateChatMessage", action, diceId, targetUser, amount
 Hooks.callAll("shareddice.createChatMessage", action, diceId, targetUser, amount, message)
 ```
 
+
+# Development Scripts
+
+### `npm run createFoundrySymlinks -- --foundry-install-path=<string>`
+Creates a `foundry/` directory in the repo root, containing symlinks to the `tsconfig.json` and the `client`, `common`, and `lang` directories of the foundry installation. These symlinks are referenced in `jsconfig.json` and used for type checking and Intellisense.
+
+**Example:** `npm run createFoundrySymlinks -- --foundry-install-path="C:\FoundryV14\foundryvtt"`
+
+| Argument                  | Type      |  Description |
+| :---                      | :---      | :--- |
+| `--foundry-install-path`  | `string`  | Absolute path to the Foundry installation directory. |
+
+**Windows Note:** Symlink creation might fail due to permissions if the terminal isn't running as Administrator and Windows Developer Mode isn't enabled.
+
+
 # Reporting Issues and Requesting Features
 
 If you are experiencing a bug or have an idea for a new feature, submit an [issue](https://github.com/belodri/shareddice/issues).
