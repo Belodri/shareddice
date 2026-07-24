@@ -1,46 +1,105 @@
+/* eslint-disable jsdoc/require-jsdoc */
 import * as fs from "fs";
-import yaml from "js-yaml";
-import path from "path";
+import path, { dirname } from "path";
+import { parseArgs } from "util";
 
-console.log("Reforging Symlinks");
+const DEST_ROOT_DIR = "foundry";  // Hardcoded because it's referenced in jsconfig
+const ABORT = "abort";
 
-if (fs.existsSync("foundry-config.yaml")) {
-    let fileRoot = "";
-    try {
-        const fc = await fs.promises.readFile("foundry-config.yaml", "utf-8");
+await (async () => {
+    process.exitCode = 1;
 
-        const foundryConfig = yaml.load(fc);
+    const options = getOptions();
+    if(!options) return;
 
-        // As of 13.338, the Node install is *not* nested but electron installs *are*
-        const nested = fs.existsSync(path.join(foundryConfig.installPath, "resources", "app"));
+    const sourceRootDir = getSourceRootDir(options.installPath);
+    if(!sourceRootDir) return;
 
-        if (nested) fileRoot = path.join(foundryConfig.installPath, "resources", "app");
-        else fileRoot = foundryConfig.installPath;
-    } catch (err) {
-        console.error(`Error reading foundry-config.yaml: ${err}`);
+    // Create destinatin dir if it doesn't already exist.
+    await fs.promises.mkdir(DEST_ROOT_DIR, { recursive: true });
+
+    // Link JS files
+    for(const p of ["client", "common", "tsconfig.json"]) {
+        const targetPath = path.join(sourceRootDir, p);
+        const symlinkPath = path.join(DEST_ROOT_DIR, p);
+
+        if(await tryCreateSymlink(targetPath, symlinkPath) === ABORT) return;
     }
 
-    try {
-        await fs.promises.mkdir("foundry");
-    } catch (e) {
-        if (e.code !== "EEXIST") throw e;
-    }
+    // Link Lang files
+    const targetPath = path.join(sourceRootDir, "public", "lang");
+    const symlinkPath = path.join(DEST_ROOT_DIR, "lang");
 
-    // Javascript files
-    for (const p of ["client", "common", "tsconfig.json"]) {
-        try {
-            await fs.promises.symlink(path.join(fileRoot, p), path.join("foundry", p));
-        } catch (e) {
-            if (e.code !== "EEXIST") throw e;
+    if(await tryCreateSymlink(targetPath, symlinkPath) === ABORT) return;
+
+    console.log("Successfully created foundry symlinks.");
+    process.exitCode = 0;
+})();
+
+
+function getOptions() {
+    const { values: parsedArgs } = parseArgs({ 
+        options: {
+            'foundry-install-path': { type: "string" }
         }
+    });
+
+    const opts = {
+        installPath: parsedArgs["foundry-install-path"]
     }
 
-    // Language files
-    try {
-        await fs.promises.symlink(path.join(fileRoot, "public", "lang"), path.join("foundry", "lang"));
-    } catch (e) {
-        if (e.code !== "EEXIST") throw e;
+    if(!opts.installPath) return console.error("Missing required argument '--foundry-install-path=<string>'");
+    if(!fs.existsSync(opts.installPath)) return console.error(`Foundry install path does not exist: ${opts.installPath}`);
+
+    return opts;
+}
+
+
+/**
+ * @param {string} foundryInstallPath 
+ */
+function getSourceRootDir(foundryInstallPath) {
+    // As of 13.338, the Node install is not nested but electron installs are
+    const isNested = fs.existsSync(path.join(foundryInstallPath, "resources", "app"));
+
+    const root = isNested 
+        ? path.join(foundryInstallPath, "resources", "app")
+        : foundryInstallPath;
+
+    if(!fs.existsSync(root)) {
+        console.error(`Foundry install path '${root}' does not exist.`);
+        return;
     }
-} else {
-    console.log("Foundry config file did not exist.");
+
+    return root;
+}
+
+/**
+ * @param {string} targetPath 
+ * @param {string} symlinkPath
+ */
+async function tryCreateSymlink(targetPath, symlinkPath) {
+    const stat = await fs.promises.lstat(symlinkPath, { throwIfNoEntry: false });
+
+    // Does the path already exist?
+    if(stat) {
+        // Is it a non-symlink file/dir?
+        if(!stat.isSymbolicLink()) {
+            console.error(`Unable to create symlink because file/directory exists at: ${symlinkPath}`);
+            console.error("Remove existing file/directory and run this script again.");
+            return ABORT;
+        }
+
+        // Is the existing symlink already correct?
+        const currentTarget = await fs.promises.readlink(symlinkPath);
+        const absoluteCurrent = path.resolve(path.dirname(symlinkPath), currentTarget); // Resolve paths to handle both absolute and relative targets accurately
+        const absoluteTarget = path.resolve(targetPath);
+        if(absoluteCurrent === absoluteTarget) return;
+
+        console.log(`Unlinking existing symlink: ${symlinkPath}`);
+        await fs.promises.unlink(symlinkPath);
+    }
+
+    await fs.promises.symlink(targetPath, symlinkPath);
+    console.log(`Symlinked: ${symlinkPath} -> ${targetPath}`);
 }

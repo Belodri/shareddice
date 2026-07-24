@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
-        "module": "ES2022",
-        "target": "ES2022",
+        "module": "nodenext",
+        "target": "es2022",
         "lib": [
             "DOM",
             "ES2022"
@@ -11,7 +11,8 @@
             "@common/*": ["./foundry/common/*"]
         },
         "allowJs": true,
-        "moduleResolution": "Node"
+        "moduleResolution": "nodenext",
+        "types": [ "node" ]
     },
     "exclude": [
         "node_modules", 
